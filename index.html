@@ -1,501 +1,604 @@
-
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Link Repository Dashboard</title>
+    <title>ReferenceX | List Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        .status-badge {
-            font-size: 0.7rem;
-            padding: 0.15rem 0.5rem;
-            border-radius: 9999px;
-            background-color: #fee2e2;
-            color: #991b1b;
-            white-space: nowrap;
-            display: inline-block;
+        .list-row:hover {
+            background-color: #f8fafc;
         }
-        .scroll-hide::-webkit-scrollbar { display: none; }
-        tr:nth-child(even) { background-color: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-900">
-    <div class="max-w-6xl mx-auto px-4 py-8">
-        <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900">Full Link Repository</h1>
-                <p class="text-slate-500 mt-2 text-lg">Consolidated reference database (P15 to P425).</p>
-            </div>
-            <div class="bg-white px-6 py-3 rounded-xl shadow-sm border border-slate-200 text-center">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Total Verified Entries</span>
-                <div id="statsCount" class="text-3xl font-black text-blue-600">0</div>
-            </div>
-        </header>
+<body class="bg-slate-50 text-slate-900 min-h-screen custom-scrollbar">
 
-        <div class="sticky top-4 z-20 mb-6">
-            <div class="bg-white/80 backdrop-blur-md rounded-xl shadow-lg border border-slate-200 p-4 flex flex-col md:flex-row gap-4">
-                <div class="relative flex-grow">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-                    <input type="text" id="searchInput" placeholder="Search by P-number, URL, or status (e.g. 'liquidated')..." 
-                        class="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm">
+    <!-- Main Navigation Header -->
+    <header class="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-slate-900 p-2 rounded flex items-center justify-center">
+                    <i class="fa-brands fa-x-twitter text-white text-lg"></i>
                 </div>
-                <div class="flex gap-2">
-                    <button id="clearBtn" class="px-6 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Reset</button>
-                    <button id="exportBtn" onclick="copyTable()" class="px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-md transition-all active:scale-95">Copy CSV</button>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-none">ReferenceX</h1>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Consolidated Database</p>
                 </div>
+            </div>
+            
+            <div class="hidden md:flex flex-1 max-w-lg mx-8 relative">
+                <input type="text" id="searchInput" placeholder="Search references, dates, or IDs..." 
+                    class="w-full pl-10 pr-4 py-2 bg-slate-100 border border-transparent rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all outline-none">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="copyAllLinks()" class="text-xs font-bold text-slate-600 hover:text-slate-900 px-3 py-2 transition-colors">
+                    <i class="fa-solid fa-copy mr-1.5"></i> COPY ALL
+                </button>
+                <div class="h-4 w-px bg-slate-200"></div>
+                <span class="text-xs font-bold text-slate-400">
+                    <span id="totalCount" class="text-slate-900">0</span> ENTRIES
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Dashboard Controls -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0" id="yearFilters">
+                <button onclick="filterByYear('all')" class="year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-slate-900 text-white shadow-sm" data-year="all">ALL</button>
+                <button onclick="filterByYear('2026')" class="year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-400" data-year="2026">2026</button>
+                <button onclick="filterByYear('2025')" class="year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-400" data-year="2025">2025</button>
+                <button onclick="filterByYear('2024')" class="year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-400" data-year="2024">2024</button>
+            </div>
+            
+            <div class="md:hidden relative">
+                <input type="text" id="searchInputMobile" placeholder="Search..." 
+                    class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm shadow-sm outline-none">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <!-- Table View -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse" id="linkTable">
+                <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-100 border-b border-slate-200 text-slate-600 uppercase text-xs tracking-widest">
-                            <th class="p-4 font-bold w-32 text-center">Reference</th>
-                            <th class="p-4 font-bold">X / Twitter Destination</th>
-                            <th class="p-4 font-bold">Account Status</th>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                            <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-40">Date</th>
+                            <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Reference Link / Status ID</th>
+                            <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-24 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 text-sm" id="tableBody">
-                        <!-- Content will be injected by JavaScript -->
+                    <tbody id="linksBody" class="divide-y divide-slate-100">
+                        <!-- Rows injected here -->
                     </tbody>
                 </table>
             </div>
-            <div id="noResults" class="hidden p-20 text-center">
-                <div class="text-slate-300 mb-4">
-                    <svg class="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                </div>
-                <p class="text-slate-500 font-medium">No results found for that search.</p>
+            
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden py-24 text-center">
+                <i class="fa-solid fa-folder-open text-slate-200 text-5xl mb-4"></i>
+                <p class="text-slate-400 font-medium text-sm">No references found for this criteria.</p>
             </div>
         </div>
+    </main>
+
+    <!-- Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-2.5 rounded-lg shadow-xl text-xs font-bold translate-y-20 opacity-0 transition-all duration-300 z-[100] flex items-center gap-2">
+        <i class="fa-solid fa-check-circle text-emerald-400"></i>
+        <span id="toastMsg">Copied to clipboard</span>
     </div>
 
     <script>
-        const data = [
-            { ref: "P15", url: "https://x.com/Marina23376051/status/1601527315808530433", note: "" },
-            { ref: "P19", url: "https://x.com/Marina23376051/status/1614204261662859266", note: "" },
-            { ref: "P71-2", url: "https://x.com/i/chat/798153669191626752-1251430245292523521", note: "" },
-            { ref: "P75-6", url: "https://x.com/Marina23376051/status/1639335145634136085", note: "" },
-            { ref: "P79", url: "https://x.com/Mahdi34860988", note: "" },
-            { ref: "P81", url: "https://x.com/Frenciemahdi22", note: "" },
-            { ref: "P153", url: "https://x.com/Marina23376051/status/1659295393664888861", note: "" },
-            { ref: "P159", url: "https://x.com/Marina23376051/status/1798415687825989890", note: "" },
-            { ref: "P159", url: "https://x.com/Marina23376051/status/1798372920152220115", note: "" },
-            { ref: "P159", url: "https://x.com/Marina23376051/status/1798227122944950602", note: "" },
-            { ref: "P160", url: "https://x.com/Marina23376051/status/1798047062405403015", note: "" },
-            { ref: "P160", url: "https://x.com/Marina23376051/status/1796465245386633224", note: "" },
-            { ref: "P160", url: "https://x.com/Marina23376051/status/1796412811100446826", note: "" },
-            { ref: "P161", url: "https://x.com/Marina23376051/status/1796043567053365378", note: "" },
-            { ref: "P161", url: "https://x.com/Marina23376051/status/1795723837163901426", note: "" },
-            { ref: "P161", url: "https://x.com/Marina23376051/status/1795003675741475209", note: "" },
-            { ref: "P161", url: "https://x.com/Marina23376051/status/1795524342413185467", note: "" },
-            { ref: "P162", url: "https://x.com/Marina23376051/status/1794724229713416250", note: "" },
-            { ref: "P162", url: "https://x.com/Marina23376051/status/1794799484700090504", note: "" },
-            { ref: "P162", url: "https://x.com/Marina23376051/status/1793744926423077254", note: "" },
-            { ref: "P163", url: "https://x.com/Marina23376051/status/1793648898000736764", note: "" },
-            { ref: "P163", url: "https://x.com/Marina23376051/status/1793591499743236506", note: "" },
-            { ref: "P163", url: "https://x.com/Marina23376051/status/1791874993967571374", note: "" },
-            { ref: "P164", url: "https://x.com/Marina23376051/status/1658789109278679041", note: "" },
-            { ref: "P164", url: "https://x.com/Marina23376051/status/1791710859246309886", note: "" },
-            { ref: "P164", url: "https://x.com/Marina23376051/status/1791124829094940679", note: "" },
-            { ref: "P165", url: "https://x.com/Marina23376051/status/1791096161979302020", note: "" },
-            { ref: "P165", url: "https://x.com/Marina23376051/status/1791025838768452090", note: "" },
-            { ref: "P165", url: "https://x.com/Marina23376051/status/1789927880010379736", note: "" },
-            { ref: "P166", url: "https://x.com/Marina23376051/status/1786346402575991053", note: "" },
-            { ref: "P166", url: "https://x.com/Marina23376051/status/1786348875617349818", note: "" },
-            { ref: "P167", url: "https://x.com/Marina23376051/status/1780995563896426670", note: "" },
-            { ref: "P167", url: "https://x.com/Marina23376051/status/1780709812374065650", note: "" },
-            { ref: "P168", url: "https://x.com/Marina23376051/status/1770796855670051171", note: "" },
-            { ref: "P168", url: "https://x.com/Marina23376051/status/1770717743882363196", note: "" },
-            { ref: "P168", url: "https://x.com/Marina23376051/status/1770157550526185496", note: "" },
-            { ref: "P169", url: "https://x.com/Marina23376051/status/1767705243972743640", note: "" },
-            { ref: "P169", url: "https://x.com/Marina23376051/status/1767562233674895740", note: "" },
-            { ref: "P169", url: "https://x.com/Marina23376051/status/1766213057632440497", note: "" },
-            { ref: "P169", url: "https://x.com/Marina23376051/status/1766154989657870555", note: "" },
-            { ref: "P170", url: "https://x.com/Marina23376051/status/1764934249415630863", note: "" },
-            { ref: "P171", url: "https://x.com/Marina23376051/status/1760777439607767218", note: "" },
-            { ref: "P172", url: "https://x.com/Marina23376051/status/1759478840848531787", note: "" },
-            { ref: "P172", url: "https://x.com/Marina23376051/status/1759578071567372394", note: "" },
-            { ref: "P172", url: "https://x.com/Marina23376051/status/1758531106372997259", note: "" },
-            { ref: "P172", url: "https://x.com/Marina23376051/status/1758515667278450893", note: "" },
-            { ref: "P172", url: "https://x.com/Marina23376051/status/1758452006090375585", note: "" },
-            { ref: "P173", url: "https://x.com/Marina23376051/status/1755161086486081846", note: "" },
-            { ref: "P173", url: "https://x.com/Marina23376051/status/1754302108310851633", note: "" },
-            { ref: "P173", url: "https://x.com/Marina23376051/status/1754264249327575069", note: "" },
-            { ref: "P174", url: "https://x.com/Marina23376051/status/1748057781402226725", note: "" },
-            { ref: "P174", url: "https://x.com/Marina23376051/status/1748057568927191528", note: "" },
-            { ref: "P174", url: "https://x.com/Marina23376051/status/1747656923132965018", note: "" },
-            { ref: "P175", url: "https://x.com/Marina23376051/status/1711969244785598567", note: "" },
-            { ref: "P176", url: "https://x.com/Marina23376051/status/1711452125430010216", note: "" },
-            { ref: "P176", url: "https://x.com/Marina23376051/status/1711969341309083849", note: "" },
-            { ref: "P177", url: "https://x.com/Marina23376051/status/1711434001880150139", note: "" },
-            { ref: "P178", url: "https://x.com/Marina23376051/status/1711425905392796116", note: "" },
-            { ref: "P179", url: "https://x.com/Marina23376051/status/1711260001359032745", note: "" },
-            { ref: "P180", url: "https://x.com/Marina23376051/status/1710566772854722777", note: "" },
-            { ref: "P180", url: "https://x.com/Marina23376051/status/1710566153393754392", note: "" },
-            { ref: "P181", url: "https://x.com/Marina23376051/status/1710215905710424413", note: "" },
-            { ref: "P181", url: "https://x.com/Marina23376051/status/1710189732175528158", note: "" },
-            { ref: "P182", url: "https://x.com/Marina23376051/status/1709632900910534823", note: "" },
-            { ref: "P182", url: "https://x.com/Marina23376051/status/1709773114735800669", note: "" },
-            { ref: "P183", url: "https://x.com/Marina23376051/status/1709541379850863052", note: "" },
-            { ref: "P183", url: "https://x.com/Marina23376051/status/1708897709137039602", note: "" },
-            { ref: "P184", url: "https://x.com/Marina23376051/status/1707860871467110764", note: "" },
-            { ref: "P184", url: "https://x.com/Marina23376051/status/1707771315006968031", note: "" },
-            { ref: "P185", url: "https://x.com/Marina23376051/status/1706750827333898347", note: "" },
-            { ref: "P185", url: "https://x.com/Marina23376051/status/1704898730267156630", note: "" },
-            { ref: "P186", url: "https://x.com/Marina23376051/status/1703780202310983830", note: "" },
-            { ref: "P186", url: "https://x.com/Marina23376051/status/1700206641486975286", note: "" },
-            { ref: "P186", url: "https://x.com/Marina23376051/status/1699524482027692287", note: "" },
-            { ref: "P187", url: "https://x.com/Marina23376051/status/1696606332575429072", note: "" },
-            { ref: "P187", url: "https://x.com/Marina23376051/status/1694266676747907077", note: "" },
-            { ref: "P187", url: "https://x.com/Marina23376051/status/1693867874178248874", note: "" },
-            { ref: "P188", url: "https://x.com/Marina23376051/status/1698330183546143024", note: "" },
-            { ref: "P188", url: "https://x.com/Marina23376051/status/1696961131137368192", note: "" },
-            { ref: "P188", url: "https://x.com/Marina23376051/status/1696606332575429072", note: "" },
-            { ref: "P189", url: "https://x.com/Marina23376051/status/1693861147055673763", note: "" },
-            { ref: "P189", url: "https://x.com/Marina23376051/status/1692591038840381797", note: "" },
-            { ref: "P189", url: "https://x.com/Marina23376051/status/1692573190709559709", note: "" },
-            { ref: "P190", url: "https://x.com/Marina23376051/status/1690733624910368768", note: "" },
-            { ref: "P191", url: "https://x.com/Marina23376051/status/1690347866085105665", note: "" },
-            { ref: "P191", url: "https://x.com/Marina23376051/status/1689662738895867904", note: "" },
-            { ref: "P191", url: "https://x.com/Marina23376051/status/1689319431476846614", note: "" },
-            { ref: "P192", url: "https://x.com/Marina23376051/status/1688933912708288512", note: "" },
-            { ref: "P192", url: "https://x.com/Marina23376051/status/1688932240590311424", note: "" },
-            { ref: "P192", url: "https://x.com/Marina23376051/status/1688932085170581504", note: "" },
-            { ref: "P193", url: "https://x.com/Marina23376051/status/1688651123123490816", note: "" },
-            { ref: "P193", url: "https://x.com/Marina23376051/status/1688557066250555392", note: "" },
-            { ref: "P193", url: "https://x.com/Marina23376051/status/1687778059099774976", note: "" },
-            { ref: "P194", url: "https://x.com/Marina23376051/status/1687777951209660416", note: "" },
-            { ref: "P194", url: "https://x.com/Marina23376051/status/1687606724172058624", note: "" },
-            { ref: "P195", url: "https://x.com/Marina23376051/status/1687158142587564032", note: "" },
-            { ref: "P195", url: "https://x.com/Marina23376051/status/1687007156820672512", note: "" },
-            { ref: "P195", url: "https://x.com/Marina23376051/status/1686737417561100288", note: "" },
-            { ref: "P196", url: "https://x.com/Marina23376051/status/1686636837085859841", note: "" },
-            { ref: "P196", url: "https://x.com/Marina23376051/status/1685724543053127680", note: "" },
-            { ref: "P197", url: "https://x.com/Marina23376051/status/1685385320664117248", note: "" },
-            { ref: "P197", url: "https://x.com/Marina23376051/status/1685006547741544449", note: "" },
-            { ref: "P198", url: "https://x.com/Marina23376051/status/1684663802644529154", note: "" },
-            { ref: "P198", url: "https://x.com/Marina23376051/status/1683387698889752577", note: "" },
-            { ref: "P198", url: "https://x.com/Marina23376051/status/1682788002827755520", note: "" },
-            { ref: "P199", url: "https://x.com/Marina23376051/status/1681913184377004032", note: "" },
-            { ref: "P199", url: "https://x.com/Marina23376051/status/1681911189301866496", note: "" },
-            { ref: "P200", url: "https://x.com/Marina23376051/status/1681764995414073346", note: "" },
-            { ref: "P200", url: "https://x.com/Marina23376051/status/1681711388584968205", note: "" },
-            { ref: "P200", url: "https://x.com/Marina23376051/status/1681709670774210564", note: "" },
-            { ref: "P201", url: "https://x.com/Marina23376051/status/1679377804280967169", note: "" },
-            { ref: "P201", url: "https://x.com/Marina23376051/status/1679227671232823298", note: "" },
-            { ref: "P201", url: "https://x.com/Marina23376051/status/1679156857720684545", note: "" },
-            { ref: "P202", url: "https://x.com/Marina23376051/status/1681223499925389312", note: "" },
-            { ref: "P202", url: "https://x.com/Marina23376051/status/1680592839971856386", note: "" },
-            { ref: "P202", url: "https://x.com/Marina23376051/status/1680323603139534848", note: "" },
-            { ref: "P203", url: "https://x.com/Marina23376051/status/1681709575500595203", note: "" },
-            { ref: "P203", url: "https://x.com/Marina23376051/status/1681652056891817985", note: "" },
-            { ref: "P204", url: "https://x.com/Marina23376051/status/1681332085884170241", note: "" },
-            { ref: "P204", url: "https://x.com/Marina23376051/status/1681309989884006400", note: "" },
-            { ref: "P205", url: "https://x.com/Marina23376051/status/1680592839971856386", note: "" },
-            { ref: "P205", url: "https://x.com/Marina23376051/status/1680323603139534848", note: "" },
-            { ref: "P205", url: "https://x.com/Marina23376051/status/1679771604681621505", note: "" },
-            { ref: "P205", url: "https://x.com/Marina23376051/status/1679767756260929536", note: "" },
-            { ref: "P206", url: "https://x.com/Marina23376051/status/1679377804280967169", note: "" },
-            { ref: "P207", url: "https://x.com/Marina23376051/status/1679227671232823298", note: "" },
-            { ref: "P207", url: "https://x.com/Marina23376051/status/1679156857720684545", note: "" },
-            { ref: "P207", url: "https://x.com/Marina23376051/status/1679001255182577664", note: "" },
-            { ref: "P208", url: "https://x.com/Marina23376051/status/1679000083826606080", note: "" },
-            { ref: "P208", url: "https://x.com/Marina23376051/status/1676936860419989505", note: "" },
-            { ref: "P209", url: "https://x.com/Marina23376051/status/1676861001528999936", note: "" },
-            { ref: "P209", url: "https://x.com/Marina23376051/status/1676699036013809667", note: "" },
-            { ref: "P209", url: "https://x.com/Marina23376051/status/1676494740223586304", note: "" },
-            { ref: "P210", url: "https://x.com/Marina23376051/status/1676494388615151616", note: "" },
-            { ref: "P210", url: "https://x.com/Marina23376051/status/1676472508881436672", note: "" },
-            { ref: "P210", url: "https://x.com/Marina23376051/status/1676467782127435777", note: "" },
-            { ref: "P211", url: "https://x.com/Marina23376051/status/1676467644369649664", note: "" },
-            { ref: "P211", url: "https://x.com/Marina23376051/status/1676180050398400514", note: "" },
-            { ref: "P211", url: "https://x.com/Marina23376051/status/1676137586736201729", note: "" },
-            { ref: "P211", url: "https://x.com/Marina23376051/status/1675872206071504898", note: "" },
-            { ref: "P212", url: "https://x.com/Marina23376051/status/1675757470537375748", note: "" },
-            { ref: "P212", url: "https://x.com/Marina23376051/status/1674873797323759617", note: "" },
-            { ref: "P212", url: "https://x.com/Marina23376051/status/1674822247440171025", note: "" },
-            { ref: "P213", url: "https://x.com/Marina23376051/status/1673295510164086791", note: "" },
-            { ref: "P213", url: "https://x.com/Marina23376051/status/1673225598322262021", note: "" },
-            { ref: "P213", url: "https://x.com/Marina23376051/status/1673652937174704128", note: "" },
-            { ref: "P213", url: "https://x.com/Marina23376051/status/1673651293619879940", note: "" },
-            { ref: "P214", url: "https://x.com/Marina23376051/status/1673222739543351297", note: "" },
-            { ref: "P214", url: "https://x.com/Marina23376051/status/1673021813629100033", note: "" },
-            { ref: "P214", url: "https://x.com/Marina23376051/status/1673021736105701377", note: "" },
-            { ref: "P215", url: "https://x.com/Marina23376051/status/1669785123355607040", note: "" },
-            { ref: "P215", url: "https://x.com/Marina23376051/status/1669660985580310529", note: "" },
-            { ref: "P215", url: "https://x.com/Marina23376051/status/1669660949068775424", note: "" },
-            { ref: "P215", url: "https://x.com/Marina23376051/status/1672289955727527937", note: "" },
-            { ref: "P215", url: "https://x.com/Marina23376051/status/1671410850031190016", note: "" },
-            { ref: "P216", url: "https://x.com/Marina23376051/status/1666707667069333507", note: "" },
-            { ref: "P216", url: "https://x.com/Marina23376051/status/1664875719674023936", note: "" },
-            { ref: "P216", url: "https://x.com/Marina23376051/status/1664875650652545025", note: "" },
-            { ref: "P217", url: "https://x.com/Marina23376051/status/1662205121479028737", note: "" },
-            { ref: "P217", url: "https://x.com/Marina23376051/status/1662205074901180416", note: "" },
-            { ref: "P217", url: "https://x.com/Marina23376051/status/1664869337797128193", note: "" },
-            { ref: "P217", url: "https://x.com/Marina23376051/status/1664610661521932288", note: "" },
-            { ref: "P218", url: "https://x.com/Marina23376051/status/1662204951387336704", note: "" },
-            { ref: "P218", url: "https://x.com/Marina23376051/status/1662203160478326785", note: "" },
-            { ref: "P219", url: "https://x.com/Marina23376051/status/1660514793608839168", note: "" },
-            { ref: "P219", url: "https://x.com/Marina23376051/status/1661744757557850112", note: "" },
-            { ref: "P219", url: "https://x.com/Marina23376051/status/1661663260188241920", note: "" },
-            { ref: "P220", url: "https://x.com/Marina23376051/status/1659902633182724098", note: "" },
-            { ref: "P220", url: "https://x.com/Marina23376051/status/1659873515254710274", note: "" },
-            { ref: "P220", url: "https://x.com/Marina23376051/status/1659230947076718593", note: "" },
-            { ref: "P220", url: "https://x.com/Marina23376051/status/1659295393664888861", note: "" },
-            { ref: "P221", url: "https://x.com/Marina23376051/status/1659295297481109512", note: "" },
-            { ref: "P221", url: "https://x.com/Marina23376051/status/1791710067667960152", note: "" },
-            { ref: "P222", url: "https://x.com/Marina23376051/status/1658710176898088961", note: "" },
-            { ref: "P222", url: "https://x.com/Marina23376051/status/1658156986037415960", note: "" },
-            { ref: "P222", url: "https://x.com/Marina23376051/status/1658126557850877957", note: "" },
-            { ref: "P223", url: "https://x.com/Marina23376051/status/1657365724703195144", note: "" },
-            { ref: "P223", url: "https://x.com/Marina23376051/status/1656803314959368193", note: "" },
-            { ref: "P225", url: "https://x.com/Marina23376051/status/1656235767235072007", note: "" },
-            { ref: "P225", url: "https://x.com/Marina23376051/status/1656247821824081920", note: "" },
-            { ref: "P227", url: "https://x.com/Marina23376051/status/1649157060376903681", note: "" },
-            { ref: "P227", url: "https://x.com/Marina23376051/status/1648443080109072386", note: "" },
-            { ref: "P229", url: "https://x.com/Marina23376051/status/1646200260056825857", note: "" },
-            { ref: "P229", url: "https://x.com/Marina23376051/status/1647998802450608128", note: "" },
-            { ref: "P229", url: "https://x.com/Marina23376051/status/1647013345394868229", note: "" },
-            { ref: "P231", url: "https://x.com/Marina23376051/status/1643348367504711683", note: "" },
-            { ref: "P231", url: "https://x.com/Marina23376051/status/1643309044679974925", note: "" },
-            { ref: "P231", url: "https://x.com/Marina23376051/status/1645829548813025280", note: "" },
-            { ref: "P231", url: "https://x.com/Marina23376051/status/1645758303710896129", note: "" },
-            { ref: "P233", url: "https://x.com/Marina23376051/status/1583332237206224896", note: "" },
-            { ref: "P233", url: "https://x.com/Marina23376051/status/1642575217674338306", note: "" },
-            { ref: "P233", url: "https://x.com/Marina23376051/status/1642575019229184009", note: "" },
-            { ref: "P233", url: "https://x.com/Marina23376051/status/1642922475682951170", note: "" },
-            { ref: "P235", url: "https://x.com/Marina23376051/status/1641707775058116608", note: "" },
-            { ref: "P235", url: "https://x.com/Marina23376051/status/1641707160974376962", note: "" },
-            { ref: "P235", url: "https://x.com/Marina23376051/status/1641542611847778308", note: "" },
-            { ref: "P235", url: "https://x.com/Marina23376051/status/1641467221745586177", note: "" },
-            { ref: "P237", url: "https://x.com/Marina23376051/status/1641137083145154563", note: "" },
-            { ref: "P237", url: "https://x.com/Marina23376051/status/1641102102113001473", note: "" },
-            { ref: "P237", url: "https://x.com/Marina23376051/status/1641094562130063362", note: "" },
-            { ref: "P237", url: "https://x.com/Marina23376051/status/1640996313922715648", note: "" },
-            { ref: "P239", url: "https://x.com/Marina23376051/status/1639335145634136085", note: "" },
-            { ref: "P239", url: "https://x.com/Marina23376051/status/1637908688500400130", note: "" },
-            { ref: "P239", url: "https://x.com/Marina23376051/status/1637579050960007170", note: "" },
-            { ref: "P241", url: "https://x.com/Marina23376051/status/1636671899122925568", note: "" },
-            { ref: "P241", url: "https://x.com/Marina23376051/status/1636671592456503297", note: "" },
-            { ref: "P241", url: "https://x.com/Marina23376051/status/1636482351864709121", note: "" },
-            { ref: "P243", url: "https://x.com/Marina23376051/status/1635307973412261888", note: "" },
-            { ref: "P243", url: "https://x.com/Marina23376051/status/1634597904823328769", note: "" },
-            { ref: "P243", url: "https://x.com/Marina23376051/status/1633219024266952706", note: "" },
-            { ref: "P243", url: "https://x.com/Marina23376051/status/1633218908097245188", note: "" },
-            { ref: "P245", url: "https://x.com/Marina23376051/status/1631592332171591680", note: "" },
-            { ref: "P245", url: "https://x.com/Marina23376051/status/1631045673322704897", note: "" },
-            { ref: "P245", url: "https://x.com/Marina23376051/status/1627441449179422720", note: "" },
-            { ref: "P245", url: "https://x.com/Marina23376051/status/1627441403641925632", note: "" },
-            { ref: "P247", url: "https://x.com/Marina23376051/status/1622838910651977729", note: "" },
-            { ref: "P247", url: "https://x.com/Marina23376051/status/1622838910651977729", note: "" },
-            { ref: "P249", url: "https://x.com/Marina23376051/status/1622838910651977729", note: "" },
-            { ref: "P249", url: "https://x.com/Marina23376051/status/1620177923184676864", note: "" },
-            { ref: "P249", url: "https://x.com/Marina23376051/status/1619978552073670657", note: "" },
-            { ref: "P251", url: "https://x.com/Marina23376051/status/1618876213963165697", note: "" },
-            { ref: "P251", url: "https://x.com/Marina23376051/status/1617225538644611072", note: "" },
-            { ref: "P253", url: "https://x.com/Marina23376051/status/1615775015458471936", note: "" },
-            { ref: "P253", url: "https://x.com/Marina23376051/status/1615711881959702536", note: "" },
-            { ref: "P253", url: "https://x.com/Marina23376051/status/1615459004662128647", note: "" },
-            { ref: "P253", url: "https://x.com/Marina23376051/status/1615457088037343232", note: "" },
-            { ref: "P255", url: "https://x.com/Marina23376051/status/1613637636626817049", note: "" },
-            { ref: "P255", url: "https://x.com/Marina23376051/status/1610319725292314624", note: "" },
-            { ref: "P255", url: "https://x.com/Marina23376051/status/1609939248169328640", note: "" },
-            { ref: "P257", url: "https://x.com/Marina23376051/status/1604199136361910273", note: "" },
-            { ref: "P257", url: "https://x.com/Marina23376051/status/1604154831647768579", note: "" },
-            { ref: "P257", url: "https://x.com/Marina23376051/status/1603871962605969435", note: "" },
-            { ref: "P257", url: "https://x.com/Marina23376051/status/1603746157389262848", note: "" },
-            { ref: "P259", url: "https://x.com/Marina23376051/status/1602383762247254017", note: "" },
-            { ref: "P259", url: "https://x.com/Marina23376051/status/1602241320692682752", note: "" },
-            { ref: "P261", url: "https://x.com/Marina23376051/status/1601138615803052037", note: "" },
-            { ref: "P261", url: "https://x.com/Marina23376051/status/1600003463215140864", note: "" },
-            { ref: "P261", url: "https://x.com/Marina23376051/status/1600001766702997504", note: "" },
-            { ref: "P263", url: "https://x.com/Marina23376051/status/1598789183836803073", note: "" },
-            { ref: "P263", url: "https://x.com/Marina23376051/status/1598722259270733827", note: "" },
-            { ref: "P263", url: "https://x.com/Marina23376051/status/1598722259270733827", note: "" },
-            { ref: "P265", url: "https://x.com/Marina23376051/status/1598300437119107072", note: "" },
-            { ref: "P265", url: "https://x.com/Marina23376051/status/1598297300081991680", note: "" },
-            { ref: "P267", url: "https://x.com/Marina23376051/status/1597685723851022337", note: "" },
-            { ref: "P267", url: "https://x.com/Marina23376051/status/1597685133615955968", note: "" },
-            { ref: "P269", url: "https://x.com/Marina23376051/status/1597494432039047170", note: "" },
-            { ref: "P269", url: "https://x.com/Marina23376051/status/1597459084844101632", note: "" },
-            { ref: "P269", url: "https://x.com/Marina23376051/status/1729844674691551333", note: "" },
-            { ref: "P271", url: "https://x.com/Marina23376051/status/1597327549495136256", note: "" },
-            { ref: "P273", url: "https://x.com/Marina23376051/status/1597327221496360962", note: "" },
-            { ref: "P273", url: "https://x.com/Marina23376051/status/1597325766035144704", note: "" },
-            { ref: "P275", url: "https://x.com/Marina23376051/status/1597325766035144704", note: "" },
-            { ref: "P277", url: "https://x.com/Marina23376051/status/1597288983926431745", note: "" },
-            { ref: "P277", url: "https://x.com/Marina23376051/status/1597288955837571072", note: "" },
-            { ref: "P277", url: "https://x.com/Marina23376051/status/1597261875980685313", note: "" },
-            { ref: "P279", url: "https://x.com/Marina23376051/status/1597213551831453697", note: "" },
-            { ref: "P279", url: "https://x.com/Marina23376051/status/1597213483032276995", note: "" },
-            { ref: "P279", url: "https://x.com/Marina23376051/status/1597212129534169088", note: "" },
-            { ref: "P279", url: "https://x.com/Marina23376051/status/1597018538958811136", note: "" },
-            { ref: "P281", url: "https://x.com/Marina23376051/status/1596964870263480320", note: "" },
-            { ref: "P281", url: "https://x.com/Marina23376051/status/1596964559507853313", note: "" },
-            { ref: "P283", url: "https://x.com/Marina23376051/status/1596269422385451008", note: "" },
-            { ref: "P283", url: "https://x.com/Marina23376051/status/1596269422196449281", note: "" },
-            { ref: "P283", url: "https://x.com/Marina23376051/status/1596260225438605316", note: "" },
-            { ref: "P285", url: "https://x.com/Marina23376051/status/1596098366554791936", note: "" },
-            { ref: "P285", url: "https://x.com/Marina23376051/status/1596068426241671168", note: "" },
-            { ref: "P287", url: "https://x.com/Marina23376051/status/1595927951698268163", note: "" },
-            { ref: "P287", url: "https://x.com/Marina23376051/status/1595927896421531648", note: "" },
-            { ref: "P289", url: "https://x.com/Marina23376051/status/1595890334315192321", note: "" },
-            { ref: "P289", url: "https://x.com/Marina23376051/status/1595865314192986113", note: "" },
-            { ref: "P291", url: "https://x.com/Marina23376051/status/1595865314192986113", note: "" },
-            { ref: "P291", url: "https://x.com/Marina23376051/status/1595857179650711554", note: "" },
-            { ref: "P291", url: "https://x.com/Marina23376051/status/1595824400930045956", note: "" },
-            { ref: "P293", url: "https://x.com/Marina23376051/status/1595782984711430146", note: "" },
-            { ref: "P293", url: "https://x.com/Marina23376051/status/1595766852734812160", note: "" },
-            { ref: "P293", url: "https://x.com/Marina23376051/status/1595746549975465984", note: "" },
-            { ref: "P293", url: "https://x.com/Marina23376051/status/1595746349831553027", note: "" },
-            { ref: "P329", url: "https://x.com/Marina23376051/status/1552398243006488578", note: "" },
-            { ref: "P329", url: "https://x.com/Marina23376051/status/1552616131743125504", note: "" },
-            { ref: "P329", url: "https://x.com/Marina23376051/status/1554850854469095424", note: "" },
-            { ref: "P329", url: "https://x.com/Marina23376051/status/1556260819490557956", note: "" },
-            { ref: "P329", url: "https://x.com/Marina23376051/status/1568109457929822208", note: "User self-liquidated/No more on X" },
-            { ref: "P329", url: "https://x.com/Marina23376051/status/1568137045733687303", note: "" },
-            { ref: "P329", url: "https://x.com/Marina23376051/status/1656235767235072007", note: "User self-liquidated/No more on X" },
-            { ref: "P331", url: "https://x.com/Marina23376051/status/1568109457929822208", note: "" },
-            { ref: "P335", url: "https://x.com/Marina23376051/status/1557950238584971264", note: "" },
-            { ref: "P335", url: "https://x.com/Marina23376051/status/1659796306569707522", note: "User self-liquidated/No more on X" },
-            { ref: "P335", url: "https://x.com/Marina23376051/status/1679001255182577664", note: "" },
-            { ref: "P337", url: "https://x.com/Marina23376051/status/1659230947076718593", note: "" },
-            { ref: "P341", url: "https://x.com/Marina23376051/status/1633098519077584896", note: "User self-liquidated/No more on X" },
-            { ref: "P345", url: "https://x.com/Marina23376051/status/1576892795662442496", note: "" },
-            { ref: "P351", url: "https://x.com/Marina23376051/status/1580816528550768640", note: "" },
-            { ref: "P355", url: "https://x.com/Marina23376051/status/1531623234663333888", note: "User self-liquidated/No more on X" },
-            { ref: "P355", url: "https://x.com/Marina23376051/status/1537091892478988291", note: "User self-liquidated/No more on X" },
-            { ref: "P355", url: "https://x.com/Marina23376051/status/1560611026038669313", note: "User self-liquidated/No more on X" },
-            { ref: "P355", url: "https://x.com/Marina23376051/status/1560611110788685829", note: "" },
-            { ref: "P355", url: "https://x.com/Marina23376051/status/1572475959827210241", note: "User self-liquidated/No more on X" },
-            { ref: "P355", url: "https://x.com/Marina23376051/status/1572585861400887296", note: "" },
-            { ref: "P355", url: "https://x.com/Marina23376051/status/1636282805284925443", note: "" },
-            { ref: "P359", url: "https://x.com/Marina23376051/status/1560611026038669313", note: "" },
-            { ref: "P363", url: "https://x.com/Marina23376051/status/1548229457009262592", note: "User self-liquidated/No more on X" },
-            { ref: "P363", url: "https://x.com/Marina23376051/status/1548229662718840833", note: "" },
-            { ref: "P363", url: "https://x.com/Marina23376051/status/1559186604790583297", note: "" },
-            { ref: "P363", url: "https://x.com/Marina23376051/status/1559225903451934721", note: "User self-liquidated/No more on X" },
-            { ref: "P363", url: "https://x.com/Marina23376051/status/1574163425596407815", note: "User self-liquidated/No more on X" },
-            { ref: "P365", url: "https://x.com/Marina23376051/status/1559225903451934721", note: "" },
-            { ref: "P368", url: "https://x.com/Marina23376051/status/1537090122130280449", note: "" },
-            { ref: "P373", url: "https://x.com/Marina23376051/status/1526637546968596483", note: "" },
-            { ref: "P373", url: "https://x.com/Marina23376051/status/1528728720885927936", note: "" },
-            { ref: "P373", url: "https://x.com/Marina23376051/status/1541391157019779072", note: "User self-liquidated/No more on X" },
-            { ref: "P373", url: "https://x.com/Marina23376051/status/1541550617042247683", note: "" },
-            { ref: "P373", url: "https://x.com/Marina23376051/status/1541550617042247683", note: "" },
-            { ref: "P373", url: "https://x.com/Marina23376051/status/1548739633693003779", note: "User self-liquidated/No more on X" },
-            { ref: "P373", url: "https://x.com/Marina23376051/status/1557950238584971264", note: "" },
-            { ref: "P373", url: "https://x.com/Marina23376051/status/1560611798704918528", note: "User self-liquidated/No more on X" },
-            { ref: "P375", url: "https://x.com/Marina23376051/status/1601300982880927745", note: "" },
-            { ref: "P375", url: "https://x.com/Marina23376051/status/1601355878858227719", note: "" },
-            { ref: "P375", url: "https://x.com/Marina23376051/status/1604877043119816714", note: "" },
-            { ref: "P375", url: "https://x.com/Marina23376051/status/1633218908097245188", note: "" },
-            { ref: "P375", url: "https://x.com/Marina23376051/status/1638114653023682560", note: "" },
-            { ref: "P377", url: "https://x.com/Marina23376051/status/1729844674691551333", note: "" },
-            { ref: "P377", url: "https://x.com/Marina23376051/status/1737049716615938049", note: "" },
-            { ref: "P385", url: "https://x.com/Marina23376051/status/1548739633693003779", note: "" },
-            { ref: "P387", url: "https://x.com/Marina23376051/status/1574177673131266048", note: "" },
-            { ref: "P391", url: "https://x.com/Marina23376051/status/1538879603380473857", note: "" },
-            { ref: "P393", url: "https://x.com/Marina23376051/status/1601571727963983872", note: "User self-liquidated/No more on X" },
-            { ref: "P399", url: "https://x.com/Marina23376051/status/1547459014287626241", note: "User self-liquidated/No more on X" },
-            { ref: "P399", url: "https://x.com/Marina23376051/status/1576892795662442496", note: "" },
-            { ref: "P403", url: "https://x.com/Marina23376051/status/1602443639388610565", note: "" },
-            { ref: "P405", url: "https://x.com/Marina23376051/status/1748057781402226725", note: "" },
-            { ref: "P407", url: "https://x.com/Marina23376051/status/1553449164998074371", note: "" },
-            { ref: "P407", url: "https://x.com/Marina23376051/status/1553686385646833664", note: "User self-liquidated/No more on X" },
-            { ref: "P407", url: "https://x.com/Marina23376051/status/1553719058637414402", note: "" },
-            { ref: "P407", url: "https://x.com/Marina23376051/status/1554037712260403200", note: "" },
-            { ref: "P407", url: "https://x.com/Marina23376051/status/1554063100801945601", note: "" },
-            { ref: "P407", url: "https://x.com/Marina23376051/status/1554346824168767489", note: "" },
-            { ref: "P407", url: "https://x.com/Marina23376051/status/1563944464221196289", note: "" },
-            { ref: "P407", url: "https://x.com/Marina23376051/status/1564477809283796994", note: "" },
-            { ref: "P409", url: "https://x.com/Marina23376051/status/1553686385646833664", note: "" },
-            { ref: "P411", url: "https://x.com/Marina23376051/status/1587049967776108545", note: "" },
-            { ref: "P415", url: "https://x.com/Marina23376051/status/1755161086486081846", note: "" },
-            { ref: "P419", url: "https://x.com/Marina23376051/status/1681764995414073346", note: "" },
-            { ref: "P423", url: "https://x.com/Marina23376051/status/1581349034434138115", note: "" },
-            { ref: "P425", url: "https://x.com/Marina23376051/status/1582478093142306816", note: "" },
-            { ref: "P425", url: "https://x.com/Marina23376051/status/1587011729984262144", note: "" },
-            { ref: "P425", url: "https://x.com/Marina23376051/status/1592822575973158913", note: "" }
+        const rawData = [
+            // 2026 DATA
+            { user: "M&М", date: "Feb 5, 2026", url: "https://twitter.com/i/web/status/2019536078139781427" },
+            { user: "M&М", date: "Feb 5, 2026", url: "https://twitter.com/i/web/status/2019470086835228763" },
+            { user: "M&М", date: "Feb 4, 2026", url: "https://twitter.com/i/web/status/2019182256124747996" },
+            { user: "M&М", date: "Feb 4, 2026", url: "https://twitter.com/i/web/status/2018968115993014377" },
+            { user: "M&М", date: "Feb 4, 2026", url: "https://twitter.com/i/web/status/2018966286370488507" },
+            { user: "M&М", date: "Feb 3, 2026", url: "https://twitter.com/i/web/status/2018528467835642092" },
+            { user: "M&М", date: "Feb 3, 2026", url: "https://twitter.com/i/web/status/2018528359295205848" },
+            { user: "M&М", date: "Feb 2, 2026", url: "https://twitter.com/i/web/status/2018299510288511249" },
+            { user: "M&М", date: "Jan 30, 2026", url: "https://twitter.com/i/web/status/2017163850680832457" },
+            { user: "M&М", date: "Jan 29, 2026", url: "https://twitter.com/i/web/status/2016845401916064029" },
+            { user: "M&М", date: "Jan 23, 2026", url: "https://twitter.com/i/web/status/2014826864661913915" },
+            { user: "M&М", date: "Jan 23, 2026", url: "https://twitter.com/i/web/status/2014785913792917743" },
+            { user: "M&М", date: "Jan 2, 2026", url: "https://twitter.com/i/web/status/2007192596553314605" },
+
+            // 2025 DATA
+            { user: "M&М", date: "Dec 23, 2025", url: "https://twitter.com/i/web/status/2003601297510138260" },
+            { user: "M&М", date: "Dec 16, 2025", url: "https://twitter.com/i/web/status/2001025598123307034" },
+            { user: "M&М", date: "Dec 11, 2025", url: "https://twitter.com/i/web/status/1999086694650540332" },
+            { user: "M&М", date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998435176032927770" },
+            { user: "M&М", date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998425680183517418" },
+            { user: "M&М", date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998424719411056698" },
+            { user: "M&М", date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998337455473238464" },
+            { user: "M&М", date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995235994128503243" },
+            { user: "M&М", date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995166088703725818" },
+            { user: "M&М", date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995164513696641407" },
+            { user: "M&М", date: "Nov 26, 2025", url: "https://twitter.com/i/web/status/1993728561803559062" },
+            { user: "M&М", date: "Nov 26, 2025", url: "https://twitter.com/i/web/status/1993727984474407197" },
+            { user: "M&М", date: "Nov 21, 2025", url: "https://twitter.com/i/web/status/1991852865258959087" },
+            { user: "M&М", date: "Nov 16, 2025", url: "https://twitter.com/i/web/status/1990079948015493255" },
+            { user: "M&М", date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986442296301117691" },
+            { user: "M&М", date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986343621126148309" },
+            { user: "M&М", date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986343449805922554" },
+            { user: "M&М", date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986343197602091385" },
+            { user: "M&М", date: "Nov 5, 2025", url: "https://twitter.com/i/web/status/1986062405621760477" },
+            { user: "M&М", date: "Nov 5, 2025", url: "https://twitter.com/i/web/status/1985993166101627027" },
+            { user: "M&М", date: "Nov 3, 2025", url: "https://twitter.com/i/web/status/1985426289985990809" },
+            { user: "M&М", date: "Nov 3, 2025", url: "https://twitter.com/i/web/status/1985349995508146661" },
+            { user: "M&М", date: "Nov 3, 2025", url: "https://twitter.com/i/web/status/1985348674546020829" },
+            { user: "M&М", date: "Oct 30, 2025", url: "https://twitter.com/i/web/status/1983784217352827068" },
+            { user: "M&М", date: "Oct 23, 2025", url: "https://twitter.com/i/web/status/1981345944646893879" },
+            { user: "M&М", date: "Oct 15, 2025", url: "https://twitter.com/i/web/status/1978365863909642505" },
+            { user: "M&М", date: "Oct 15, 2025", url: "https://twitter.com/i/web/status/1978274505928700114" },
+            { user: "M&М", date: "Oct 13, 2025", url: "https://twitter.com/i/web/status/1977639761750983126" },
+            { user: "M&М", date: "Oct 12, 2025", url: "https://twitter.com/i/web/status/1977417459780161707" },
+            { user: "M&М", date: "Oct 12, 2025", url: "https://twitter.com/i/web/status/1977289504688845155" },
+            { user: "M&М", date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976591943892398547" },
+            { user: "M&М", date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976591682897396116" },
+            { user: "M&М", date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976556823005020635" },
+            { user: "M&М", date: "Oct 9, 2025", url: "https://twitter.com/i/web/status/1976201239550623797" },
+            { user: "M&М", date: "Oct 7, 2025", url: "https://twitter.com/i/web/status/1975651190202675408" },
+            { user: "M&М", date: "Oct 5, 2025", url: "https://twitter.com/i/web/status/1974906468160967047" },
+            { user: "M&М", date: "Oct 5, 2025", url: "https://twitter.com/i/web/status/1974758209987694610" },
+            { user: "M&М", date: "Sep 11, 2025", url: "https://twitter.com/i/web/status/1966044400879907128" },
+            { user: "M&М", date: "Sep 4, 2025", url: "https://twitter.com/i/web/status/1963506893659222193" },
+            { user: "M&М", date: "Sep 4, 2025", url: "https://twitter.com/i/web/status/1963506557011792269" },
+            { user: "M&М", date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1960094387658166629" },
+            { user: "M&М", date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1960008074741137734" },
+            { user: "M&М", date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1959998811239330047" },
+            { user: "M&М", date: "Aug 23, 2025", url: "https://twitter.com/i/web/status/1959157081086345409" },
+            { user: "M&М", date: "Aug 22, 2025", url: "https://twitter.com/i/web/status/1958900583420551314" },
+            { user: "M&М", date: "Aug 19, 2025", url: "https://twitter.com/i/web/status/1957736450746687700" },
+            { user: "M&М", date: "Aug 19, 2025", url: "https://twitter.com/i/web/status/1957717245976551610" },
+            { user: "M&М", date: "Aug 17, 2025", url: "https://twitter.com/i/web/status/1957055360570679442" },
+            { user: "M&М", date: "Aug 15, 2025", url: "https://twitter.com/i/web/status/1956241913700286735" },
+            { user: "M&М", date: "Aug 15, 2025", url: "https://twitter.com/i/web/status/1956240761160134683" },
+            { user: "M&М", date: "Aug 8, 2025", url: "https://twitter.com/i/web/status/1953895277045461254" },
+            { user: "M&М", date: "Aug 4, 2025", url: "https://twitter.com/i/web/status/1952461315488043268" },
+            { user: "M&М", date: "Jul 29, 2025", url: "https://twitter.com/i/web/status/1950159326024286210" },
+            { user: "M&М", date: "Jul 28, 2025", url: "https://twitter.com/i/web/status/1949758795866951769" },
+            { user: "M&М", date: "Jul 26, 2025", url: "https://twitter.com/i/web/status/1949136049491304493" },
+            { user: "M&М", date: "Jul 21, 2025", url: "https://twitter.com/i/web/status/1947286077309346061" },
+            { user: "M&М", date: "Jul 16, 2025", url: "https://twitter.com/i/web/status/1945365182877700525" },
+            { user: "M&М", date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944815036758663354" },
+            { user: "M&М", date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944814647145554167" },
+            { user: "M&М", date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944788164557615226" },
+            { user: "M&М", date: "Jul 13, 2025", url: "https://twitter.com/i/web/status/1944327678833590305" },
+            { user: "M&М", date: "Jul 11, 2025", url: "https://twitter.com/i/web/status/1943648410604593481" },
+            { user: "M&М", date: "Jul 7, 2025", url: "https://twitter.com/i/web/status/1942225903565586530" },
+            { user: "M&М", date: "Jul 7, 2025", url: "https://twitter.com/i/web/status/1942148995981189437" },
+            { user: "M&М", date: "Jul 7, 2025", url: "https://twitter.com/i/web/status/1942148882072232279" },
+            { user: "M&М", date: "Jun 30, 2025", url: "https://twitter.com/i/web/status/1939803487757300071" },
+            { user: "M&М", date: "Jun 30, 2025", url: "https://twitter.com/i/web/status/1939803464290496722" },
+            { user: "M&М", date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938618088934535343" },
+            { user: "M&М", date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938568440891232753" },
+            { user: "M&М", date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938547894417526966" },
+            { user: "M&М", date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938547857092456647" },
+            { user: "M&М", date: "Jun 26, 2025", url: "https://twitter.com/i/web/status/1938220682631922161" },
+            { user: "M&М", date: "Jun 25, 2025", url: "https://twitter.com/i/web/status/1937916873305190570" },
+            { user: "M&М", date: "Jun 22, 2025", url: "https://twitter.com/i/web/status/1936763125220663300" },
+            { user: "M&М", date: "Jun 21, 2025", url: "https://twitter.com/i/web/status/1936343312551817576" },
+            { user: "M&М", date: "Jun 12, 2025", url: "https://twitter.com/i/web/status/1933235429572059414" },
+            { user: "M&М", date: "Jun 12, 2025", url: "https://twitter.com/i/web/status/1933235215591161992" },
+            { user: "M&М", date: "Jun 10, 2025", url: "https://twitter.com/i/web/status/1932416666723635324" },
+            { user: "M&М", date: "May 31, 2025", url: "https://twitter.com/i/web/status/1928880115573813306" },
+            { user: "M&М", date: "May 30, 2025", url: "https://twitter.com/i/web/status/1928344403216658651" },
+            { user: "M&М", date: "May 30, 2025", url: "https://twitter.com/i/web/status/1928337502290452792" },
+            { user: "M&М", date: "May 26, 2025", url: "https://twitter.com/i/web/status/1926870558299373948" },
+            { user: "M&М", date: "May 25, 2025", url: "https://twitter.com/i/web/status/1926610979183374746" },
+            { user: "M&М", date: "May 25, 2025", url: "https://twitter.com/i/web/status/1926603963521998956" },
+            { user: "M&М", date: "May 22, 2025", url: "https://twitter.com/i/web/status/1925495465505661155" },
+            { user: "M&М", date: "May 22, 2025", url: "https://twitter.com/i/web/status/1925494939116306804" },
+            { user: "M&М", date: "May 18, 2025", url: "https://twitter.com/i/web/status/1924052840743412080" },
+            { user: "M&М", date: "May 16, 2025", url: "https://twitter.com/i/web/status/1923363551550279795" },
+            { user: "M&М", date: "May 16, 2025", url: "https://twitter.com/i/web/status/19232605000176354" },
+            { user: "M&М", date: "May 15, 2025", url: "https://twitter.com/i/web/status/192291364030431282" },
+            { user: "M&М", date: "May 15, 2025", url: "https://twitter.com/i/web/status/1922912184041959736" },
+            { user: "M&М", date: "May 14, 2025", url: "https://twitter.com/i/web/status/1922722013191221619" },
+            { user: "M&М", date: "May 9, 2025", url: "https://twitter.com/i/web/status/1920883131978052007" },
+            { user: "M&М", date: "May 9, 2025", url: "https://twitter.com/i/web/status/1920745390678081556" },
+            { user: "M&М", date: "May 8, 2025", url: "https://twitter.com/i/web/status/1920535009137463467" },
+            { user: "M&М", date: "May 7, 2025", url: "https://twitter.com/i/web/status/19201441250572863" },
+            { user: "M&М", date: "May 3, 2025", url: "https://twitter.com/i/web/status/19187351060862365" },
+            { user: "M&М", date: "Apr 30, 2025", url: "https://twitter.com/i/web/status/1917637769695838475" },
+            { user: "M&М", date: "Apr 30, 2025", url: "https://twitter.com/i/web/status/1917520123167904158" },
+            { user: "M&М", date: "Apr 29, 2025", url: "https://twitter.com/i/web/status/1917339588579975311" },
+            { user: "M&М", date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916887089800454209" },
+            { user: "M&М", date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916775045344461308" },
+            { user: "M&М", date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916774034815041592" },
+            { user: "M&М", date: "Apr 26, 2025", url: "https://twitter.com/i/web/status/1916144808017474020" },
+            { user: "M&М", date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915353719475998825" },
+            { user: "M&М", date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915345489286795279" },
+            { user: "M&М", date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915194880885731612" },
+            { user: "M&М", date: "Apr 21, 2025", url: "https://twitter.com/i/web/status/1914237655736287355" },
+            { user: "M&М", date: "Apr 18, 2025", url: "https://twitter.com/i/web/status/1913130424135540816" },
+            { user: "M&М", date: "Apr 17, 2025", url: "https://twitter.com/i/web/status/1912787303811924084" },
+            { user: "M&М", date: "Apr 14, 2025", url: "https://twitter.com/i/web/status/1911767239839133998" },
+            { user: "M&М", date: "Apr 12, 2025", url: "https://twitter.com/i/web/status/1911005976414535924" },
+            { user: "M&М", date: "Apr 11, 2025", url: "https://twitter.com/i/web/status/1910708186220310850" },
+            { user: "M&М", date: "Apr 2, 2025", url: "https://twitter.com/i/web/status/1907517967086047602" },
+            { user: "M&М", date: "Mar 28, 2025", url: "https://twitter.com/i/web/status/1905611005582807384" },
+            { user: "M&М", date: "Mar 28, 2025", url: "https://twitter.com/i/web/status/1905527528346841194" },
+            { user: "M&М", date: "Mar 27, 2025", url: "https://twitter.com/i/web/status/1905392191817593326" },
+            { user: "M&М", date: "Mar 27, 2025", url: "https://twitter.com/i/web/status/1905303796747485427" },
+            { user: "M&М", date: "Mar 26, 2025", url: "https://twitter.com/i/web/status/1904991349058732505" },
+            { user: "M&М", date: "Mar 24, 2025", url: "https://twitter.com/i/web/status/1904200516495651085" },
+            { user: "M&М", date: "Mar 22, 2025", url: "https://twitter.com/i/web/status/1903381776644379056" },
+            { user: "M&М", date: "Mar 21, 2025", url: "https://twitter.com/i/web/status/1903076185036272121" },
+            { user: "M&М", date: "Mar 19, 2025", url: "https://twitter.com/i/web/status/1902472903553065138" },
+            { user: "M&М", date: "Mar 18, 2025", url: "https://twitter.com/i/web/status/1901960489183117391" },
+            { user: "M&М", date: "Mar 18, 2025", url: "https://twitter.com/i/web/status/1901959448517628144" },
+            { user: "M&М", date: "Mar 16, 2025", url: "https://twitter.com/i/web/status/1901387040262115762" },
+            { user: "M&М", date: "Mar 15, 2025", url: "https://twitter.com/i/web/status/1900700398106611951" },
+            { user: "M&М", date: "Mar 12, 2025", url: "https://twitter.com/i/web/status/1899670165203071477" },
+            { user: "M&М", date: "Mar 10, 2025", url: "https://twitter.com/i/web/status/1899220506676527446" },
+            { user: "M&М", date: "Mar 8, 2025", url: "https://twitter.com/i/web/status/1898487654347419794" },
+            { user: "M&М", date: "Mar 8, 2025", url: "https://twitter.com/i/web/status/1898429181433680294" },
+            { user: "M&М", date: "Mar 5, 2025", url: "https://twitter.com/i/web/status/1897285590418382919" },
+            { user: "M&М", date: "Mar 4, 2025", url: "https://twitter.com/i/web/status/1896824986108850572" },
+            { user: "M&М", date: "Mar 2, 2025", url: "https://twitter.com/i/web/status/1896341702551695809" },
+            { user: "M&М", date: "Mar 1, 2025", url: "https://twitter.com/i/web/status/1895627743309807836" },
+            { user: "M&М", date: "Feb 28, 2025", url: "https://twitter.com/i/web/status/1895618228455632899" },
+            { user: "M&М", date: "Feb 28, 2025", url: "https://twitter.com/i/web/status/1895465977485369700" },
+            { user: "M&М", date: "Feb 26, 2025", url: "https://twitter.com/i/web/status/1894883947357540374" },
+            { user: "M&М", date: "Feb 23, 2025", url: "https://twitter.com/i/web/status/1893708882767143325" },
+            { user: "M&М", date: "Feb 21, 2025", url: "https://twitter.com/i/web/status/1892928803183153195" },
+            { user: "M&М", date: "Feb 14, 2025", url: "https://twitter.com/i/web/status/1890530338037706935" },
+            { user: "M&М", date: "Feb 11, 2025", url: "https://twitter.com/i/web/status/1889445183181246490" },
+            { user: "M&М", date: "Feb 11, 2025", url: "https://twitter.com/i/web/status/1889339651804053765" },
+            { user: "M&М", date: "Feb 10, 2025", url: "https://twitter.com/i/web/status/1888840570329522579" },
+            { user: "M&М", date: "Feb 9, 2025", url: "https://twitter.com/i/web/status/1888584637712093670" },
+            { user: "M&М", date: "Feb 8, 2025", url: "https://twitter.com/i/web/status/1888376401549758970" },
+            { user: "M&М", date: "Feb 8, 2025", url: "https://twitter.com/i/web/status/1888278420364120543" },
+            { user: "M&М", date: "Feb 6, 2025", url: "https://twitter.com/i/web/status/1887611381081624982" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887186226748285030" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887135623632584788" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887135527796719849" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887124328518406285" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887108426515329333" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887094671819628976" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887088258527408188" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887088026821505311" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887087961830834628" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887087901889962378" },
+            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887038245101289589" },
+            { user: "M&М", date: "Feb 4, 2025", url: "https://twitter.com/i/web/status/1886900182551306641" },
+            { user: "M&М", date: "Feb 4, 2025", url: "https://twitter.com/i/web/status/1886887030329925689" },
+            { user: "M&М", date: "Feb 4, 2025", url: "https://twitter.com/i/web/status/1886659951453405611" },
+            { user: "M&М", date: "Feb 2, 2025", url: "https://twitter.com/i/web/status/1886080824665075770" },
+            { user: "M&М", date: "Feb 2, 2025", url: "https://twitter.com/i/web/status/1886046778522227155" },
+            { user: "M&М", date: "Feb 2, 2025", url: "https://twitter.com/i/web/status/1885961160186298584" },
+            { user: "M&М", date: "Feb 1, 2025", url: "https://twitter.com/i/web/status/1885615262767993009" },
+            { user: "M&М", date: "Jan 27, 2025", url: "https://twitter.com/i/web/status/1883795460974108728" },
+            { user: "M&М", date: "Jan 26, 2025", url: "https://twitter.com/i/web/status/1883588159243722835" },
+            { user: "M&М", date: "Jan 22, 2025", url: "https://twitter.com/i/web/status/1882138520523088202" },
+            { user: "M&М", date: "Jan 22, 2025", url: "https://twitter.com/i/web/status/1882138269917515897" },
+            { user: "M&М", date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879093528619552938" },
+            { user: "M&М", date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879093444955799943" },
+            { user: "M&М", date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879090258383650906" },
+            { user: "M&М", date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879086646311993766" },
+            { user: "M&М", date: "Jan 13, 2025", url: "https://twitter.com/i/web/status/1878722987094102142" },
+            { user: "M&М", date: "Jan 12, 2025", url: "https://twitter.com/i/web/status/1878512720548352338" },
+
+            // 2024 DATA
+            { user: "M&М", date: "Dec 30, 2024", url: "https://twitter.com/i/web/status/1873686345539064311" },
+            { user: "M&М", date: "Dec 27, 2024", url: "https://twitter.com/i/web/status/1872584176379351494" },
+            { user: "M&М", date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834054386982481938" },
+            { user: "M&М", date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834054034770329777" },
+            { user: "M&М", date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834053815164960832" },
+            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833803359729455414" },
+            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833797136959390168" },
+            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833772981601837084" },
+            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833772596967383052" },
+            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833729365504348189" },
+            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833729277755322477" },
+            { user: "M&М", date: "Sep 10, 2024", url: "https://x.com/i/web/status/1833282512769937622" },
+            { user: "M&М", date: "Sep 9, 2024", url: "https://x.com/i/web/status/1833262420388634650" },
+            { user: "M&М", date: "Sep 9, 2024", url: "https://x.com/i/web/status/1833164318940053828" },
+            { user: "M&М", date: "Sep 8, 2024", url: "https://x.com/i/web/status/1832656565125488785" },
+            { user: "M&М", date: "Sep 7, 2024", url: "https://x.com/i/web/status/1832301887107768476" },
+            { user: "M&М", date: "Sep 6, 2024", url: "https://x.com/i/web/status/1832092683873255856" },
+            { user: "M&М", date: "Sep 6, 2024", url: "https://x.com/i/web/status/1831947752928137293" },
+            { user: "M&М", date: "Sep 5, 2024", url: "https://x.com/i/web/status/1831681929969619103" },
+            { user: "M&М", date: "Sep 5, 2024", url: "https://x.com/i/web/status/1831681657545322543" },
+            { user: "M&М", date: "Sep 5, 2024", url: "https://x.com/i/web/status/1831660387298615688" },
+            { user: "M&М", date: "Sep 4, 2024", url: "https://x.com/i/web/status/1831233989627019321" },
+            { user: "M&М", date: "Sep 4, 2024", url: "https://x.com/i/web/status/1831233815236194355" },
+            { user: "M&М", date: "Sep 4, 2024", url: "https://x.com/i/web/status/1831224639139287302" },
+            { user: "M&М", date: "Sep 3, 2024", url: "https://x.com/i/web/status/1830857239671796110" },
+            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830673919667511380" },
+            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830573875626729666" },
+            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830571890471026741" },
+            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830568268156801243" },
+            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830559238654988406" },
+            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830543806678053232" },
+            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830543038470336963" },
+            { user: "M&М", date: "Aug 31, 2024", url: "https://x.com/i/web/status/1829972228428984485" },
+            { user: "M&М", date: "Aug 29, 2024", url: "https://x.com/i/web/status/1829254072702251447" },
+            { user: "M&М", date: "Aug 27, 2024", url: "https://x.com/i/web/status/1828523594982322481" },
+            { user: "M&М", date: "Aug 27, 2024", url: "https://x.com/i/web/status/1828522847507271760" },
+            { user: "M&М", date: "Aug 21, 2024", url: "https://x.com/i/web/status/1826265144810479837" },
+            { user: "M&М", date: "Aug 21, 2024", url: "https://x.com/i/web/status/1826221496617886124" },
+            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825940175094165810" },
+            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825938770115572132" },
+            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936958692143289" },
+            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936881793773619" },
+            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936544844362202" },
+            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825924436198879492" },
+            { user: "M&М", date: "Aug 19, 2024", url: "https://x.com/i/web/status/1825624796089946418" },
+            { user: "M&М", date: "Aug 19, 2024", url: "https://x.com/i/web/status/1825568442100945074" },
+            { user: "M&М", date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824503875891761339" },
+            { user: "M&М", date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824495451829309911" },
+            { user: "M&М", date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824489516477870432" },
+            { user: "M&М", date: "Aug 15, 2024", url: "https://x.com/i/web/status/1824074684016599421" },
+            { user: "M&М", date: "Aug 15, 2024", url: "https://x.com/i/web/status/1824050325000429799" },
+            { user: "M&М", date: "Aug 15, 2024", url: "https://x.com/i/web/status/1823967556903882975" },
+            { user: "M&М", date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823746346584625311" },
+            { user: "M&М", date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823746239545921631" },
+            { user: "M&М", date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823736305186169326" },
+            { user: "M&М", date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823657147743207804" },
+            { user: "M&М", date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823426144055779533" },
+            { user: "M&М", date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823420076017475599" },
+            { user: "M&М", date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823411073481163049" },
+            { user: "M&М", date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823284541550678396" },
+            { user: "M&М", date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823279911945064750" },
+            { user: "M&М", date: "Aug 10, 2024", url: "https://x.com/i/web/status/1823279911945064750" },
+            { user: "M&М", date: "Aug 10, 2024", url: "https://x.com/i/web/status/1822378512805707951" },
+            { user: "M&М", date: "Aug 10, 2024", url: "https://x.com/i/web/status/1822209915496071333" },
+            { user: "M&М", date: "Aug 9, 2024", url: "https://x.com/i/web/status/1822209915496071333" },
+            { user: "M&М", date: "Aug 9, 2024", url: "https://x.com/i/web/status/1821813226276823293" },
+            { user: "M&М", date: "Aug 8, 2024", url: "https://x.com/i/web/status/1821473938985062860" },
+            { user: "M&М", date: "Aug 7, 2024", url: "https://x.com/i/web/status/1821235560976945515" },
+            { user: "M&М", date: "Aug 7, 2024", url: "https://x.com/i/web/status/1821172698401161377" },
+            { user: "M&М", date: "Aug 7, 2024", url: "https://x.com/i/web/status/1821113978556186796" },
+            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820913253775802869" },
+            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820760011439825348" },
+            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820727440127267227" },
+            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820727019463692691" },
+            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820725589751251176" },
+            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820724748281684302" },
+            { user: "M&М", date: "Aug 5, 2024", url: "https://x.com/i/web/status/1820443781289628069" },
+            { user: "M&М", date: "Aug 4, 2024", url: "https://x.com/i/web/status/1820219365893054467" },
+            { user: "M&М", date: "Aug 4, 2024", url: "https://x.com/i/web/status/1819979801639137652" },
+            { user: "M&М", date: "Aug 3, 2024", url: "https://x.com/i/web/status/1819701924788101403" },
+            { user: "M&М", date: "Aug 3, 2024", url: "https://x.com/i/web/status/1819701765366800483" },
+            { user: "M&М", date: "Aug 2, 2024", url: "https://x.com/i/web/status/1819462541338378243" },
+            { user: "M&М", date: "Aug 1, 2024", url: "https://x.com/i/web/status/1819043721628856654" },
+            { user: "M&М", date: "Aug 1, 2024", url: "https://x.com/i/web/status/1819041500031836565" },
+            { user: "M&М", date: "Aug 1, 2024", url: "https://x.com/i/web/status/1819041157042876622" },
+            { user: "M&М", date: "Aug 1, 2024", url: "https://x.com/i/web/status/1818970981488095367" },
+            { user: "M&М", date: "Aug 1, 2024", url: "https://x.com/i/web/status/1818921780297245149" },
+            { user: "M&М", date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818733775565599028" },
+            { user: "M&М", date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818588650214494657" },
+            { user: "M&М", date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818586394459078799" },
+            { user: "M&М", date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818391628303728827" },
+            { user: "M&М", date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818390832761979135" },
+            { user: "M&М", date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818349879384850871" },
+            { user: "M&М", date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818310768133046306" },
+            { user: "M&М", date: "Jul 29, 2024", url: "https://x.com/i/web/status/1817933933155143721" },
+            { user: "M&М", date: "Jul 29, 2024", url: "https://x.com/i/web/status/1818028758319906932" },
+            { user: "M&М", date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816877458664075596" },
+            { user: "M&М", date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816805110816612368" },
+            { user: "M&М", date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816798215968014412" },
+            { user: "M&М", date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816741721599844391" },
+            { user: "M&М", date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816698141833322538" },
+            { user: "M&М", date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816216107771887882" },
+            { user: "M&М", date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816147238088810936" },
+            { user: "M&М", date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816024007549870472" },
+            { user: "M&М", date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815781147906843023" },
+            { user: "M&М", date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815662255704330673" },
+            { user: "M&М", date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815617292686041406" },
+            { user: "M&М", date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815617186163052725" },
+            { user: "M&М", date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815464709531070898" },
+            { user: "M&М", date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437598833193069" },
+            { user: "M&М", date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437582064353335" },
+            { user: "M&М", date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437554901983646" },
+            { user: "M&М", date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815399590759129224" },
+            { user: "M&М", date: "Jul 21, 2024", url: "https://x.com/i/web/status/1815086382026780709" },
+            { user: "M&М", date: "Jul 21, 2024", url: "https://x.com/i/web/status/1815000783924154847" },
+            { user: "M&М", date: "Jul 21, 2024", url: "https://x.com/i/web/status/1814950885702709282" },
+            { user: "M&М", date: "Jul 20, 2024", url: "https://x.com/i/web/status/1814696384559272257" },
+            { user: "M&М", date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814351862071468361" },
+            { user: "M&М", date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814224967883493433" },
+            { user: "M&М", date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814204375369175171" },
+            { user: "M&М", date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814177810241531994" },
+            { user: "M&М", date: "Jul 18, 2024", url: "https://x.com/i/web/status/1813935093289021492" },
+            { user: "M&М", date: "Jul 18, 2024", url: "https://x.com/i/web/status/1813896052397019351" },
+            { user: "M&М", date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813574619472822725" },
+            { user: "M&М", date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813476282685858066" },
+            { user: "M&М", date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813448170568909114" },
+            { user: "M&М", date: "Jul 16, 2024", url: "https://x.com/i/web/status/1813192457636458569" },
+            { user: "M&М", date: "Jul 16, 2024", url: "https://x.com/i/web/status/1813151780160618892" },
+            { user: "M&М", date: "Jul 15, 2024", url: "https://x.com/i/web/status/1812733919369805922" },
+            { user: "M&М", date: "Jul 14, 2024", url: "https://x.com/i/web/status/1812531549507584302" },
+            { user: "M&М", date: "Jul 13, 2024", url: "https://x.com/i/web/status/1812101444029325362" },
+            { user: "M&М", date: "Jul 13, 2024", url: "https://x.com/i/web/status/1812026261503369511" },
+            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811808621086281969" },
+            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788561269530842" },
+            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788474803962012" },
+            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788329572008294" },
+            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811629885846065615" },
+            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811629829000774023" },
+            { user: "M&М", date: "Jul 11, 2024", url: "https://x.com/i/web/status/1811480185255895077" },
+            { user: "M&М", date: "Jul 11, 2024", url: "https://x.com/i/web/status/1811289918901018985" },
+            { user: "M&М", date: "Jul 10, 2024", url: "https://x.com/i/web/status/1811088931259031992" },
+            { user: "M&М", date: "Jul 9, 2024", url: "https://x.com/i/web/status/1810636866582126753" },
+            { user: "M&М", date: "Jul 8, 2024", url: "https://x.com/i/web/status/1810208870599365022" },
+            { user: "M&М", date: "Jul 7, 2024", url: "https://x.com/i/web/status/1809942669080113427" },
+            { user: "M&М", date: "Jul 7, 2024", url: "https://x.com/i/web/status/1809942287847428379" },
+            { user: "M&М", date: "Jul 6, 2024", url: "https://x.com/i/web/status/1809456717853319197" },
+            { user: "M&М", date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809244046205780190" },
+            { user: "M&М", date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809243796716101692" },
+            { user: "M&М", date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809081821352603750" },
+            { user: "M&М", date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809080732138017084" },
+            { user: "M&М", date: "Jul 4, 2024", url: "https://x.com/i/web/status/1808760695770485138" },
+            { user: "M&М", date: "Jul 3, 2024", url: "https://x.com/i/web/status/1808527263920439469" },
+            { user: "M&М", date: "Jul 2, 2024", url: "https://x.com/i/web/status/1808113094998065411" },
+            { user: "M&М", date: "Jul 1, 2024", url: "https://x.com/i/web/status/1807665095167578145" },
+            { user: "M&М", date: "Jul 1, 2024", url: "https://x.com/i/web/status/1807664630296097255" }
         ];
 
-        function renderTable(items) {
-            const tbody = document.getElementById('tableBody');
-            const noResults = document.getElementById('noResults');
-            const stats = document.getElementById('statsCount');
-            
-            stats.innerText = items.length;
+        let activeYear = 'all';
+        let searchQuery = '';
 
-            if (items.length === 0) {
-                tbody.innerHTML = '';
-                noResults.classList.remove('hidden');
+        const monthMap = {
+            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+            "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+        };
+
+        function init() {
+            renderList();
+            setupSearch();
+        }
+
+        function getYear(dateStr) {
+            const match = dateStr.match(/\d{4}/);
+            return match ? match[0] : "";
+        }
+
+        function renderList() {
+            const body = document.getElementById('linksBody');
+            const empty = document.getElementById('emptyState');
+            body.innerHTML = '';
+
+            const filtered = rawData.filter(item => {
+                const year = getYear(item.date);
+                const matchesYear = activeYear === 'all' || year === activeYear;
+                const matchesSearch = item.date.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                     item.url.includes(searchQuery);
+                return matchesYear && matchesSearch;
+            });
+
+            document.getElementById('totalCount').innerText = filtered.length;
+
+            if (filtered.length === 0) {
+                empty.classList.remove('hidden');
                 return;
+            } else {
+                empty.classList.add('hidden');
             }
 
-            noResults.classList.add('hidden');
-            tbody.innerHTML = items.map(item => `
-                <tr class="hover:bg-blue-50 transition-colors group">
-                    <td class="p-4 text-center">
-                        <span class="inline-block px-3 py-1 bg-white border border-slate-200 text-slate-800 font-bold rounded shadow-sm text-xs">
-                            ${item.ref}
-                        </span>
+            // Grouping logic
+            let lastHeader = "";
+
+            filtered.forEach(item => {
+                const parts = item.date.split(' ');
+                const month = parts[0].replace(',', '');
+                const year = parts[parts.length - 1];
+                const currentHeader = `${month} ${year}`;
+
+                if (currentHeader !== lastHeader) {
+                    const separator = document.createElement('tr');
+                    separator.className = "bg-slate-50/80";
+                    separator.innerHTML = `
+                        <td colspan="3" class="px-6 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-y border-slate-100 backdrop-blur-sm">
+                            ${currentHeader}
+                        </td>
+                    `;
+                    body.appendChild(separator);
+                    lastHeader = currentHeader;
+                }
+
+                const row = document.createElement('tr');
+                row.className = "list-row transition-colors group border-b border-slate-50";
+                
+                const statusId = item.url.split('/').pop();
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-slate-500 font-mono">
+                        ${item.date}
                     </td>
-                    <td class="p-4">
-                        <a href="${item.url}" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium break-all flex items-center gap-2">
-                            <span>${item.url}</span>
-                            <svg class="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                        </a>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-col">
+                            <span class="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">ID: ${statusId}</span>
+                            <span class="text-[11px] text-slate-400 truncate max-w-lg font-mono mt-0.5">${item.url}</span>
+                        </div>
                     </td>
-                    <td class="p-4">
-                        ${item.note ? `<span class="status-badge">${item.note}</span>` : '<span class="text-slate-300 italic">No notes</span>'}
+                    <td class="px-6 py-4 text-right whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-1.5">
+                            <button onclick="copyToClipboard('${item.url}')" class="w-7 h-7 flex items-center justify-center rounded bg-slate-50 text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition-all" title="Copy URL">
+                                <i class="fa-solid fa-copy text-xs"></i>
+                            </button>
+                            <a href="${item.url}" target="_blank" class="w-7 h-7 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:text-white hover:bg-slate-900 transition-all shadow-sm" title="Open Link">
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
                     </td>
-                </tr>
-            `).join('');
+                `;
+                body.appendChild(row);
+            });
         }
 
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase().trim();
-            const filtered = data.filter(item => 
-                item.ref.toLowerCase().includes(term) || 
-                item.url.toLowerCase().includes(term) ||
-                item.note.toLowerCase().includes(term)
-            );
-            renderTable(filtered);
-        });
+        function filterByYear(year) {
+            activeYear = year;
+            document.querySelectorAll('.year-filter').forEach(btn => {
+                if (btn.dataset.year === year) {
+                    btn.className = "year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-slate-900 text-white shadow-sm";
+                } else {
+                    btn.className = "year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-400 transition-all";
+                }
+            });
+            renderList();
+        }
 
-        document.getElementById('clearBtn').addEventListener('click', () => {
-            document.getElementById('searchInput').value = '';
-            renderTable(data);
-        });
+        function setupSearch() {
+            const handler = (e) => {
+                searchQuery = e.target.value;
+                document.getElementById('searchInput').value = searchQuery;
+                document.getElementById('searchInputMobile').value = searchQuery;
+                renderList();
+            };
+            document.getElementById('searchInput').addEventListener('input', handler);
+            document.getElementById('searchInputMobile').addEventListener('input', handler);
+        }
 
-        function copyTable() {
-            const text = data.map(i => `${i.ref}, ${i.url}, ${i.note}`).join('\n');
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
+        function copyToClipboard(text) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
             document.execCommand('copy');
-            document.body.removeChild(textArea);
-            
-            const btn = document.getElementById('exportBtn');
-            const originalText = btn.innerText;
-            btn.innerText = "Copied to Clipboard!";
-            btn.classList.replace('bg-blue-600', 'bg-green-600');
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.classList.replace('bg-green-600', 'bg-blue-600');
-            }, 2000);
+            document.body.removeChild(el);
+            showToast("Copied to clipboard");
         }
 
-        // Initial render on load
-        window.onload = () => {
-            renderTable(data);
+        function copyAllLinks() {
+            const links = rawData.map(item => `${item.date}: ${item.url}`).join('\n');
+            const el = document.createElement('textarea');
+            el.value = links;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast("Consolidated database copied");
         }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.replace('translate-y-20', 'translate-y-0');
+            toast.classList.replace('opacity-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.replace('translate-y-0', 'translate-y-20');
+                toast.classList.replace('opacity-100', 'opacity-0');
+            }, 2500);
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
