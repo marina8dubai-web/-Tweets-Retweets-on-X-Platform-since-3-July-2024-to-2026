@@ -1,464 +1,507 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReferenceX | List Dashboard</title>
+    <title>ReferenceX | Marina Murkalieva X Archive</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .list-row:hover {
-            background-color: #f8fafc;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        :root {
+            --slate-50: #f8fafc;
+            --slate-900: #0f172a;
         }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .list-row { transition: all 0.1s ease; }
+        .list-row:hover { background-color: var(--slate-50); }
+
+        /* Modal Backdrop Blur */
+        #previewModal {
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+        }
+
+        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen custom-scrollbar">
 
-    <!-- Main Navigation Header -->
-    <header class="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="bg-slate-900 p-2 rounded flex items-center justify-center">
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="bg-slate-900 p-2 rounded-lg shadow-lg">
                     <i class="fa-brands fa-x-twitter text-white text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold text-slate-900 leading-none">ReferenceX</h1>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-1">Consolidated Database</p>
+                    <h1 class="text-lg font-black tracking-tight uppercase leading-none">ReferenceX</h1>
+                    <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Archive Database</p>
                 </div>
             </div>
             
-            <div class="hidden md:flex flex-1 max-w-lg mx-8 relative">
-                <input type="text" id="searchInput" placeholder="Search references, dates, or IDs..." 
-                    class="w-full pl-10 pr-4 py-2 bg-slate-100 border border-transparent rounded-lg text-sm focus:bg-white focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all outline-none">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <div class="hidden md:flex flex-1 max-w-md mx-8 relative">
+                <input type="text" id="searchInput" placeholder="Search archive..." 
+                    class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-slate-900 outline-none transition-all">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
             </div>
 
-            <div class="flex items-center gap-3">
-                <button onclick="copyAllLinks()" class="text-xs font-bold text-slate-600 hover:text-slate-900 px-3 py-2 transition-colors">
-                    <i class="fa-solid fa-copy mr-1.5"></i> COPY ALL
+            <div class="flex items-center gap-4">
+                <button onclick="copyAllLinks()" class="text-[10px] font-black text-slate-500 hover:text-slate-900 uppercase tracking-widest transition-colors">
+                    <i class="fa-solid fa-copy mr-1"></i> Copy Filtered
                 </button>
-                <div class="h-4 w-px bg-slate-200"></div>
-                <span class="text-xs font-bold text-slate-400">
-                    <span id="totalCount" class="text-slate-900">0</span> ENTRIES
-                </span>
+                <div class="text-right">
+                    <p id="totalCount" class="text-sm font-black leading-none">0</p>
+                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">RECORDS</p>
+                </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        <!-- Dashboard Controls -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div class="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0" id="yearFilters">
-                <button onclick="filterByYear('all')" class="year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-slate-900 text-white shadow-sm" data-year="all">ALL</button>
-                <button onclick="filterByYear('2026')" class="year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-400" data-year="2026">2026</button>
-                <button onclick="filterByYear('2025')" class="year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-400" data-year="2025">2025</button>
-                <button onclick="filterByYear('2024')" class="year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-400" data-year="2024">2024</button>
-            </div>
-            
-            <div class="md:hidden relative">
-                <input type="text" id="searchInputMobile" placeholder="Search..." 
-                    class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm shadow-sm outline-none">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            </div>
+        <!-- Filters -->
+        <div class="flex flex-wrap items-center gap-2 mb-8">
+            <button onclick="filterByYear('all')" class="year-filter px-5 py-1.5 rounded-full text-[10px] font-black bg-slate-900 text-white shadow-md shadow-slate-200 transition-all" data-year="all">ALL TIME</button>
+            <button onclick="filterByYear('2026')" class="year-filter px-5 py-1.5 rounded-full text-[10px] font-black bg-white text-slate-400 border border-slate-200 hover:border-slate-900 hover:text-slate-900 transition-all" data-year="2026">2026</button>
+            <button onclick="filterByYear('2025')" class="year-filter px-5 py-1.5 rounded-full text-[10px] font-black bg-white text-slate-400 border border-slate-200 hover:border-slate-900 hover:text-slate-900 transition-all" data-year="2025">2025</button>
+            <button onclick="filterByYear('2024')" class="year-filter px-5 py-1.5 rounded-full text-[10px] font-black bg-white text-slate-400 border border-slate-200 hover:border-slate-900 hover:text-slate-900 transition-all" data-year="2024">2024</button>
         </div>
 
-        <!-- Table View -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <!-- Regenerated Table Format -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse min-w-[800px]">
                     <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200">
-                            <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-40">Date</th>
-                            <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Reference Link / Status ID</th>
-                            <th class="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider w-24 text-right">Actions</th>
+                        <tr class="bg-slate-50/50 border-b border-slate-200">
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-40">Date</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-48">LINK</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Content Preview</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody id="linksBody" class="divide-y divide-slate-100">
-                        <!-- Rows injected here -->
+                        <!-- Rows injected via JS -->
                     </tbody>
                 </table>
             </div>
             
-            <!-- Empty State -->
-            <div id="emptyState" class="hidden py-24 text-center">
+            <div id="emptyState" class="hidden py-32 text-center">
                 <i class="fa-solid fa-folder-open text-slate-200 text-5xl mb-4"></i>
-                <p class="text-slate-400 font-medium text-sm">No references found for this criteria.</p>
+                <p class="text-slate-400 font-bold text-sm">No archived references found.</p>
             </div>
         </div>
     </main>
 
-    <!-- Notification -->
-    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-5 py-2.5 rounded-lg shadow-xl text-xs font-bold translate-y-20 opacity-0 transition-all duration-300 z-[100] flex items-center gap-2">
-        <i class="fa-solid fa-check-circle text-emerald-400"></i>
-        <span id="toastMsg">Copied to clipboard</span>
+    <!-- Detail Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="modalContent">
+            <div class="p-8">
+                <div class="flex justify-between items-start mb-6">
+                    <div class="bg-slate-100 px-3 py-1 rounded-full text-[10px] font-black text-slate-500 uppercase tracking-widest" id="modalType">
+                        POST
+                    </div>
+                    <button onclick="closePreview()" class="text-slate-300 hover:text-slate-900 transition-colors">
+                        <i class="fa-solid fa-circle-xmark text-2xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Data Block -->
+                    <div class="border-l-4 border-slate-900 pl-4 py-1">
+                        <p id="modalDate" class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1"></p>
+                        <p id="modalSnippet" class="text-lg font-bold text-slate-900 leading-tight"></p>
+                        <p id="modalStatusId" class="text-[11px] font-mono text-slate-500 mt-2"></p>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-5">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Technical Reference</p>
+                        <p id="modalFullLink" class="text-[11px] font-mono text-slate-600 break-all bg-white border border-slate-200 p-3 rounded-xl mb-4"></p>
+                        
+                        <a id="modalOpenBtn" href="#" target="_blank" class="inline-flex items-center gap-2 text-[11px] font-black text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest">
+                            Open in new tab <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">Marina Murkalieva X Archive</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl text-[10px] font-black uppercase tracking-widest translate-y-24 opacity-0 transition-all duration-300 z-[100]">
+        <i class="fa-solid fa-check-circle text-emerald-400 mr-2"></i>
+        <span id="toastMsg">Copied</span>
     </div>
 
     <script>
         const rawData = [
-            // 2026 DATA
-            { user: "M&М", date: "Feb 5, 2026", url: "https://twitter.com/i/web/status/2019536078139781427" },
-            { user: "M&М", date: "Feb 5, 2026", url: "https://twitter.com/i/web/status/2019470086835228763" },
-            { user: "M&М", date: "Feb 4, 2026", url: "https://twitter.com/i/web/status/2019182256124747996" },
-            { user: "M&М", date: "Feb 4, 2026", url: "https://twitter.com/i/web/status/2018968115993014377" },
-            { user: "M&М", date: "Feb 4, 2026", url: "https://twitter.com/i/web/status/2018966286370488507" },
-            { user: "M&М", date: "Feb 3, 2026", url: "https://twitter.com/i/web/status/2018528467835642092" },
-            { user: "M&М", date: "Feb 3, 2026", url: "https://twitter.com/i/web/status/2018528359295205848" },
-            { user: "M&М", date: "Feb 2, 2026", url: "https://twitter.com/i/web/status/2018299510288511249" },
-            { user: "M&М", date: "Jan 30, 2026", url: "https://twitter.com/i/web/status/2017163850680832457" },
-            { user: "M&М", date: "Jan 29, 2026", url: "https://twitter.com/i/web/status/2016845401916064029" },
-            { user: "M&М", date: "Jan 23, 2026", url: "https://twitter.com/i/web/status/2014826864661913915" },
-            { user: "M&М", date: "Jan 23, 2026", url: "https://twitter.com/i/web/status/2014785913792917743" },
-            { user: "M&М", date: "Jan 2, 2026", url: "https://twitter.com/i/web/status/2007192596553314605" },
+            // Sample Data with Types (defaulting types for preview)
+            { date: "Feb 5, 2026", url: "https://twitter.com/i/web/status/2019536078139781427", type: "Post" },
+            { date: "Feb 5, 2026", url: "https://twitter.com/i/web/status/2019470086835228763", type: "Post" },
+            { date: "Feb 4, 2026", url: "https://twitter.com/i/web/status/2019182256124747996", type: "Post" },
+            { date: "Feb 4, 2026", url: "https://twitter.com/i/web/status/2018968115993014377", type: "RT" },
+            { date: "Feb 4, 2026", url: "https://twitter.com/i/web/status/2018966286370488507", type: "Post" },
+            { date: "Feb 3, 2026", url: "https://twitter.com/i/web/status/2018528467835642092", type: "Post" },
+            { date: "Feb 3, 2026", url: "https://twitter.com/i/web/status/2018528359295205848", type: "RT" },
+            { date: "Feb 2, 2026", url: "https://twitter.com/i/web/status/2018299510288511249", type: "Post" },
+            { date: "Jan 30, 2026", url: "https://twitter.com/i/web/status/2017163850680832457", type: "Post" },
+            { date: "Jan 29, 2026", url: "https://twitter.com/i/web/status/2016845401916064029", type: "Post" },
+            { date: "Jan 23, 2026", url: "https://twitter.com/i/web/status/2014826864661913915", type: "RT" },
+            { date: "Jan 23, 2026", url: "https://twitter.com/i/web/status/2014785913792917743", type: "Post" },
+            { date: "Jan 2, 2026", url: "https://twitter.com/i/web/status/2007192596553314605", type: "Post" },
 
             // 2025 DATA
-            { user: "M&М", date: "Dec 23, 2025", url: "https://twitter.com/i/web/status/2003601297510138260" },
-            { user: "M&М", date: "Dec 16, 2025", url: "https://twitter.com/i/web/status/2001025598123307034" },
-            { user: "M&М", date: "Dec 11, 2025", url: "https://twitter.com/i/web/status/1999086694650540332" },
-            { user: "M&М", date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998435176032927770" },
-            { user: "M&М", date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998425680183517418" },
-            { user: "M&М", date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998424719411056698" },
-            { user: "M&М", date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998337455473238464" },
-            { user: "M&М", date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995235994128503243" },
-            { user: "M&М", date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995166088703725818" },
-            { user: "M&М", date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995164513696641407" },
-            { user: "M&М", date: "Nov 26, 2025", url: "https://twitter.com/i/web/status/1993728561803559062" },
-            { user: "M&М", date: "Nov 26, 2025", url: "https://twitter.com/i/web/status/1993727984474407197" },
-            { user: "M&М", date: "Nov 21, 2025", url: "https://twitter.com/i/web/status/1991852865258959087" },
-            { user: "M&М", date: "Nov 16, 2025", url: "https://twitter.com/i/web/status/1990079948015493255" },
-            { user: "M&М", date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986442296301117691" },
-            { user: "M&М", date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986343621126148309" },
-            { user: "M&М", date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986343449805922554" },
-            { user: "M&М", date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986343197602091385" },
-            { user: "M&М", date: "Nov 5, 2025", url: "https://twitter.com/i/web/status/1986062405621760477" },
-            { user: "M&М", date: "Nov 5, 2025", url: "https://twitter.com/i/web/status/1985993166101627027" },
-            { user: "M&М", date: "Nov 3, 2025", url: "https://twitter.com/i/web/status/1985426289985990809" },
-            { user: "M&М", date: "Nov 3, 2025", url: "https://twitter.com/i/web/status/1985349995508146661" },
-            { user: "M&М", date: "Nov 3, 2025", url: "https://twitter.com/i/web/status/1985348674546020829" },
-            { user: "M&М", date: "Oct 30, 2025", url: "https://twitter.com/i/web/status/1983784217352827068" },
-            { user: "M&М", date: "Oct 23, 2025", url: "https://twitter.com/i/web/status/1981345944646893879" },
-            { user: "M&М", date: "Oct 15, 2025", url: "https://twitter.com/i/web/status/1978365863909642505" },
-            { user: "M&М", date: "Oct 15, 2025", url: "https://twitter.com/i/web/status/1978274505928700114" },
-            { user: "M&М", date: "Oct 13, 2025", url: "https://twitter.com/i/web/status/1977639761750983126" },
-            { user: "M&М", date: "Oct 12, 2025", url: "https://twitter.com/i/web/status/1977417459780161707" },
-            { user: "M&М", date: "Oct 12, 2025", url: "https://twitter.com/i/web/status/1977289504688845155" },
-            { user: "M&М", date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976591943892398547" },
-            { user: "M&М", date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976591682897396116" },
-            { user: "M&М", date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976556823005020635" },
-            { user: "M&М", date: "Oct 9, 2025", url: "https://twitter.com/i/web/status/1976201239550623797" },
-            { user: "M&М", date: "Oct 7, 2025", url: "https://twitter.com/i/web/status/1975651190202675408" },
-            { user: "M&М", date: "Oct 5, 2025", url: "https://twitter.com/i/web/status/1974906468160967047" },
-            { user: "M&М", date: "Oct 5, 2025", url: "https://twitter.com/i/web/status/1974758209987694610" },
-            { user: "M&М", date: "Sep 11, 2025", url: "https://twitter.com/i/web/status/1966044400879907128" },
-            { user: "M&М", date: "Sep 4, 2025", url: "https://twitter.com/i/web/status/1963506893659222193" },
-            { user: "M&М", date: "Sep 4, 2025", url: "https://twitter.com/i/web/status/1963506557011792269" },
-            { user: "M&М", date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1960094387658166629" },
-            { user: "M&М", date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1960008074741137734" },
-            { user: "M&М", date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1959998811239330047" },
-            { user: "M&М", date: "Aug 23, 2025", url: "https://twitter.com/i/web/status/1959157081086345409" },
-            { user: "M&М", date: "Aug 22, 2025", url: "https://twitter.com/i/web/status/1958900583420551314" },
-            { user: "M&М", date: "Aug 19, 2025", url: "https://twitter.com/i/web/status/1957736450746687700" },
-            { user: "M&М", date: "Aug 19, 2025", url: "https://twitter.com/i/web/status/1957717245976551610" },
-            { user: "M&М", date: "Aug 17, 2025", url: "https://twitter.com/i/web/status/1957055360570679442" },
-            { user: "M&М", date: "Aug 15, 2025", url: "https://twitter.com/i/web/status/1956241913700286735" },
-            { user: "M&М", date: "Aug 15, 2025", url: "https://twitter.com/i/web/status/1956240761160134683" },
-            { user: "M&М", date: "Aug 8, 2025", url: "https://twitter.com/i/web/status/1953895277045461254" },
-            { user: "M&М", date: "Aug 4, 2025", url: "https://twitter.com/i/web/status/1952461315488043268" },
-            { user: "M&М", date: "Jul 29, 2025", url: "https://twitter.com/i/web/status/1950159326024286210" },
-            { user: "M&М", date: "Jul 28, 2025", url: "https://twitter.com/i/web/status/1949758795866951769" },
-            { user: "M&М", date: "Jul 26, 2025", url: "https://twitter.com/i/web/status/1949136049491304493" },
-            { user: "M&М", date: "Jul 21, 2025", url: "https://twitter.com/i/web/status/1947286077309346061" },
-            { user: "M&М", date: "Jul 16, 2025", url: "https://twitter.com/i/web/status/1945365182877700525" },
-            { user: "M&М", date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944815036758663354" },
-            { user: "M&М", date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944814647145554167" },
-            { user: "M&М", date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944788164557615226" },
-            { user: "M&М", date: "Jul 13, 2025", url: "https://twitter.com/i/web/status/1944327678833590305" },
-            { user: "M&М", date: "Jul 11, 2025", url: "https://twitter.com/i/web/status/1943648410604593481" },
-            { user: "M&М", date: "Jul 7, 2025", url: "https://twitter.com/i/web/status/1942225903565586530" },
-            { user: "M&М", date: "Jul 7, 2025", url: "https://twitter.com/i/web/status/1942148995981189437" },
-            { user: "M&М", date: "Jul 7, 2025", url: "https://twitter.com/i/web/status/1942148882072232279" },
-            { user: "M&М", date: "Jun 30, 2025", url: "https://twitter.com/i/web/status/1939803487757300071" },
-            { user: "M&М", date: "Jun 30, 2025", url: "https://twitter.com/i/web/status/1939803464290496722" },
-            { user: "M&М", date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938618088934535343" },
-            { user: "M&М", date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938568440891232753" },
-            { user: "M&М", date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938547894417526966" },
-            { user: "M&М", date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938547857092456647" },
-            { user: "M&М", date: "Jun 26, 2025", url: "https://twitter.com/i/web/status/1938220682631922161" },
-            { user: "M&М", date: "Jun 25, 2025", url: "https://twitter.com/i/web/status/1937916873305190570" },
-            { user: "M&М", date: "Jun 22, 2025", url: "https://twitter.com/i/web/status/1936763125220663300" },
-            { user: "M&М", date: "Jun 21, 2025", url: "https://twitter.com/i/web/status/1936343312551817576" },
-            { user: "M&М", date: "Jun 12, 2025", url: "https://twitter.com/i/web/status/1933235429572059414" },
-            { user: "M&М", date: "Jun 12, 2025", url: "https://twitter.com/i/web/status/1933235215591161992" },
-            { user: "M&М", date: "Jun 10, 2025", url: "https://twitter.com/i/web/status/1932416666723635324" },
-            { user: "M&М", date: "May 31, 2025", url: "https://twitter.com/i/web/status/1928880115573813306" },
-            { user: "M&М", date: "May 30, 2025", url: "https://twitter.com/i/web/status/1928344403216658651" },
-            { user: "M&М", date: "May 30, 2025", url: "https://twitter.com/i/web/status/1928337502290452792" },
-            { user: "M&М", date: "May 26, 2025", url: "https://twitter.com/i/web/status/1926870558299373948" },
-            { user: "M&М", date: "May 25, 2025", url: "https://twitter.com/i/web/status/1926610979183374746" },
-            { user: "M&М", date: "May 25, 2025", url: "https://twitter.com/i/web/status/1926603963521998956" },
-            { user: "M&М", date: "May 22, 2025", url: "https://twitter.com/i/web/status/1925495465505661155" },
-            { user: "M&М", date: "May 22, 2025", url: "https://twitter.com/i/web/status/1925494939116306804" },
-            { user: "M&М", date: "May 18, 2025", url: "https://twitter.com/i/web/status/1924052840743412080" },
-            { user: "M&М", date: "May 16, 2025", url: "https://twitter.com/i/web/status/1923363551550279795" },
-            { user: "M&М", date: "May 16, 2025", url: "https://twitter.com/i/web/status/19232605000176354" },
-            { user: "M&М", date: "May 15, 2025", url: "https://twitter.com/i/web/status/192291364030431282" },
-            { user: "M&М", date: "May 15, 2025", url: "https://twitter.com/i/web/status/1922912184041959736" },
-            { user: "M&М", date: "May 14, 2025", url: "https://twitter.com/i/web/status/1922722013191221619" },
-            { user: "M&М", date: "May 9, 2025", url: "https://twitter.com/i/web/status/1920883131978052007" },
-            { user: "M&М", date: "May 9, 2025", url: "https://twitter.com/i/web/status/1920745390678081556" },
-            { user: "M&М", date: "May 8, 2025", url: "https://twitter.com/i/web/status/1920535009137463467" },
-            { user: "M&М", date: "May 7, 2025", url: "https://twitter.com/i/web/status/19201441250572863" },
-            { user: "M&М", date: "May 3, 2025", url: "https://twitter.com/i/web/status/19187351060862365" },
-            { user: "M&М", date: "Apr 30, 2025", url: "https://twitter.com/i/web/status/1917637769695838475" },
-            { user: "M&М", date: "Apr 30, 2025", url: "https://twitter.com/i/web/status/1917520123167904158" },
-            { user: "M&М", date: "Apr 29, 2025", url: "https://twitter.com/i/web/status/1917339588579975311" },
-            { user: "M&М", date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916887089800454209" },
-            { user: "M&М", date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916775045344461308" },
-            { user: "M&М", date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916774034815041592" },
-            { user: "M&М", date: "Apr 26, 2025", url: "https://twitter.com/i/web/status/1916144808017474020" },
-            { user: "M&М", date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915353719475998825" },
-            { user: "M&М", date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915345489286795279" },
-            { user: "M&М", date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915194880885731612" },
-            { user: "M&М", date: "Apr 21, 2025", url: "https://twitter.com/i/web/status/1914237655736287355" },
-            { user: "M&М", date: "Apr 18, 2025", url: "https://twitter.com/i/web/status/1913130424135540816" },
-            { user: "M&М", date: "Apr 17, 2025", url: "https://twitter.com/i/web/status/1912787303811924084" },
-            { user: "M&М", date: "Apr 14, 2025", url: "https://twitter.com/i/web/status/1911767239839133998" },
-            { user: "M&М", date: "Apr 12, 2025", url: "https://twitter.com/i/web/status/1911005976414535924" },
-            { user: "M&М", date: "Apr 11, 2025", url: "https://twitter.com/i/web/status/1910708186220310850" },
-            { user: "M&М", date: "Apr 2, 2025", url: "https://twitter.com/i/web/status/1907517967086047602" },
-            { user: "M&М", date: "Mar 28, 2025", url: "https://twitter.com/i/web/status/1905611005582807384" },
-            { user: "M&М", date: "Mar 28, 2025", url: "https://twitter.com/i/web/status/1905527528346841194" },
-            { user: "M&М", date: "Mar 27, 2025", url: "https://twitter.com/i/web/status/1905392191817593326" },
-            { user: "M&М", date: "Mar 27, 2025", url: "https://twitter.com/i/web/status/1905303796747485427" },
-            { user: "M&М", date: "Mar 26, 2025", url: "https://twitter.com/i/web/status/1904991349058732505" },
-            { user: "M&М", date: "Mar 24, 2025", url: "https://twitter.com/i/web/status/1904200516495651085" },
-            { user: "M&М", date: "Mar 22, 2025", url: "https://twitter.com/i/web/status/1903381776644379056" },
-            { user: "M&М", date: "Mar 21, 2025", url: "https://twitter.com/i/web/status/1903076185036272121" },
-            { user: "M&М", date: "Mar 19, 2025", url: "https://twitter.com/i/web/status/1902472903553065138" },
-            { user: "M&М", date: "Mar 18, 2025", url: "https://twitter.com/i/web/status/1901960489183117391" },
-            { user: "M&М", date: "Mar 18, 2025", url: "https://twitter.com/i/web/status/1901959448517628144" },
-            { user: "M&М", date: "Mar 16, 2025", url: "https://twitter.com/i/web/status/1901387040262115762" },
-            { user: "M&М", date: "Mar 15, 2025", url: "https://twitter.com/i/web/status/1900700398106611951" },
-            { user: "M&М", date: "Mar 12, 2025", url: "https://twitter.com/i/web/status/1899670165203071477" },
-            { user: "M&М", date: "Mar 10, 2025", url: "https://twitter.com/i/web/status/1899220506676527446" },
-            { user: "M&М", date: "Mar 8, 2025", url: "https://twitter.com/i/web/status/1898487654347419794" },
-            { user: "M&М", date: "Mar 8, 2025", url: "https://twitter.com/i/web/status/1898429181433680294" },
-            { user: "M&М", date: "Mar 5, 2025", url: "https://twitter.com/i/web/status/1897285590418382919" },
-            { user: "M&М", date: "Mar 4, 2025", url: "https://twitter.com/i/web/status/1896824986108850572" },
-            { user: "M&М", date: "Mar 2, 2025", url: "https://twitter.com/i/web/status/1896341702551695809" },
-            { user: "M&М", date: "Mar 1, 2025", url: "https://twitter.com/i/web/status/1895627743309807836" },
-            { user: "M&М", date: "Feb 28, 2025", url: "https://twitter.com/i/web/status/1895618228455632899" },
-            { user: "M&М", date: "Feb 28, 2025", url: "https://twitter.com/i/web/status/1895465977485369700" },
-            { user: "M&М", date: "Feb 26, 2025", url: "https://twitter.com/i/web/status/1894883947357540374" },
-            { user: "M&М", date: "Feb 23, 2025", url: "https://twitter.com/i/web/status/1893708882767143325" },
-            { user: "M&М", date: "Feb 21, 2025", url: "https://twitter.com/i/web/status/1892928803183153195" },
-            { user: "M&М", date: "Feb 14, 2025", url: "https://twitter.com/i/web/status/1890530338037706935" },
-            { user: "M&М", date: "Feb 11, 2025", url: "https://twitter.com/i/web/status/1889445183181246490" },
-            { user: "M&М", date: "Feb 11, 2025", url: "https://twitter.com/i/web/status/1889339651804053765" },
-            { user: "M&М", date: "Feb 10, 2025", url: "https://twitter.com/i/web/status/1888840570329522579" },
-            { user: "M&М", date: "Feb 9, 2025", url: "https://twitter.com/i/web/status/1888584637712093670" },
-            { user: "M&М", date: "Feb 8, 2025", url: "https://twitter.com/i/web/status/1888376401549758970" },
-            { user: "M&М", date: "Feb 8, 2025", url: "https://twitter.com/i/web/status/1888278420364120543" },
-            { user: "M&М", date: "Feb 6, 2025", url: "https://twitter.com/i/web/status/1887611381081624982" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887186226748285030" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887135623632584788" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887135527796719849" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887124328518406285" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887108426515329333" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887094671819628976" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887088258527408188" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887088026821505311" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887087961830834628" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887087901889962378" },
-            { user: "M&М", date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887038245101289589" },
-            { user: "M&М", date: "Feb 4, 2025", url: "https://twitter.com/i/web/status/1886900182551306641" },
-            { user: "M&М", date: "Feb 4, 2025", url: "https://twitter.com/i/web/status/1886887030329925689" },
-            { user: "M&М", date: "Feb 4, 2025", url: "https://twitter.com/i/web/status/1886659951453405611" },
-            { user: "M&М", date: "Feb 2, 2025", url: "https://twitter.com/i/web/status/1886080824665075770" },
-            { user: "M&М", date: "Feb 2, 2025", url: "https://twitter.com/i/web/status/1886046778522227155" },
-            { user: "M&М", date: "Feb 2, 2025", url: "https://twitter.com/i/web/status/1885961160186298584" },
-            { user: "M&М", date: "Feb 1, 2025", url: "https://twitter.com/i/web/status/1885615262767993009" },
-            { user: "M&М", date: "Jan 27, 2025", url: "https://twitter.com/i/web/status/1883795460974108728" },
-            { user: "M&М", date: "Jan 26, 2025", url: "https://twitter.com/i/web/status/1883588159243722835" },
-            { user: "M&М", date: "Jan 22, 2025", url: "https://twitter.com/i/web/status/1882138520523088202" },
-            { user: "M&М", date: "Jan 22, 2025", url: "https://twitter.com/i/web/status/1882138269917515897" },
-            { user: "M&М", date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879093528619552938" },
-            { user: "M&М", date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879093444955799943" },
-            { user: "M&М", date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879090258383650906" },
-            { user: "M&М", date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879086646311993766" },
-            { user: "M&М", date: "Jan 13, 2025", url: "https://twitter.com/i/web/status/1878722987094102142" },
-            { user: "M&М", date: "Jan 12, 2025", url: "https://twitter.com/i/web/status/1878512720548352338" },
+            { date: "Dec 23, 2025", url: "https://twitter.com/i/web/status/2003601297510138260", type: "Post" },
+            { date: "Dec 16, 2025", url: "https://twitter.com/i/web/status/2001025598123307034", type: "RT" },
+            { date: "Dec 11, 2025", url: "https://twitter.com/i/web/status/1999086694650540332", type: "Post" },
+            { date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998435176032927770", type: "Post" },
+            { date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998425680183517418", type: "Post" },
+            { date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998424719411056698", type: "RT" },
+            { date: "Dec 9, 2025", url: "https://twitter.com/i/web/status/1998337455473238464", type: "Post" },
+            { date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995235994128503243", type: "Post" },
+            { date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995166088703725818", type: "Post" },
+            { date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995164513696641407", type: "Post" },
+            { date: "Nov 26, 2025", url: "https://twitter.com/i/web/status/1993728561803559062", type: "RT" },
+            { date: "Nov 26, 2025", url: "https://twitter.com/i/web/status/1993727984474407197", type: "Post" },
+            { date: "Nov 21, 2025", url: "https://twitter.com/i/web/status/1991852865258959087", type: "Post" },
+            { date: "Nov 16, 2025", url: "https://twitter.com/i/web/status/1990079948015493255", type: "Post" },
+            { date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986442296301117691", type: "Post" },
+            { date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986343621126148309", type: "Post" },
+            { date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986343449805922554", type: "Post" },
+            { date: "Nov 6, 2025", url: "https://twitter.com/i/web/status/1986343197602091385", type: "Post" },
+            { date: "Nov 5, 2025", url: "https://twitter.com/i/web/status/1986062405621760477", type: "Post" },
+            { date: "Nov 5, 2025", url: "https://twitter.com/i/web/status/1985993166101627027", type: "Post" },
+            { date: "Nov 3, 2025", url: "https://twitter.com/i/web/status/1985426289985990809", type: "Post" },
+            { date: "Nov 3, 2025", url: "https://twitter.com/i/web/status/1985349995508146661", type: "Post" },
+            { date: "Nov 3, 2025", url: "https://twitter.com/i/web/status/1985348674546020829", type: "Post" },
+            { date: "Oct 30, 2025", url: "https://twitter.com/i/web/status/1983784217352827068", type: "Post" },
+            { date: "Oct 23, 2025", url: "https://twitter.com/i/web/status/1981345944646893879", type: "Post" },
+            { date: "Oct 15, 2025", url: "https://twitter.com/i/web/status/1978365863909642505", type: "Post" },
+            { date: "Oct 15, 2025", url: "https://twitter.com/i/web/status/1978274505928700114", type: "Post" },
+            { date: "Oct 13, 2025", url: "https://twitter.com/i/web/status/1977639761750983126", type: "Post" },
+            { date: "Oct 12, 2025", url: "https://twitter.com/i/web/status/1977417459780161707", type: "Post" },
+            { date: "Oct 12, 2025", url: "https://twitter.com/i/web/status/1977289504688845155", type: "Post" },
+            { date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976591943892398547", type: "Post" },
+            { date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976591682897396116", type: "Post" },
+            { date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976556823005020635", type: "Post" },
+            { date: "Oct 9, 2025", url: "https://twitter.com/i/web/status/1976201239550623797", type: "Post" },
+            { date: "Oct 7, 2025", url: "https://twitter.com/i/web/status/1975651190202675408", type: "Post" },
+            { date: "Oct 5, 2025", url: "https://twitter.com/i/web/status/1974906468160967047", type: "Post" },
+            { date: "Oct 5, 2025", url: "https://twitter.com/i/web/status/1974758209987694610", type: "Post" },
+            { date: "Sep 11, 2025", url: "https://twitter.com/i/web/status/1966044400879907128", type: "Post" },
+            { date: "Sep 4, 2025", url: "https://twitter.com/i/web/status/1963506893659222193", type: "Post" },
+            { date: "Sep 4, 2025", url: "https://twitter.com/i/web/status/1963506557011792269", type: "Post" },
+            { date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1960094387658166629", type: "Post" },
+            { date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1960008074741137734", type: "Post" },
+            { date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1959998811239330047", type: "Post" },
+            { date: "Aug 23, 2025", url: "https://twitter.com/i/web/status/1959157081086345409", type: "Post" },
+            { date: "Aug 22, 2025", url: "https://twitter.com/i/web/status/1958900583420551314", type: "Post" },
+            { date: "Aug 19, 2025", url: "https://twitter.com/i/web/status/1957736450746687700", type: "Post" },
+            { date: "Aug 19, 2025", url: "https://twitter.com/i/web/status/1957717245976551610", type: "Post" },
+            { date: "Aug 17, 2025", url: "https://twitter.com/i/web/status/1957055360570679442", type: "Post" },
+            { date: "Aug 15, 2025", url: "https://twitter.com/i/web/status/1956241913700286735", type: "Post" },
+            { date: "Aug 15, 2025", url: "https://twitter.com/i/web/status/1956240761160134683", type: "Post" },
+            { date: "Aug 8, 2025", url: "https://twitter.com/i/web/status/1953895277045461254", type: "Post" },
+            { date: "Aug 4, 2025", url: "https://twitter.com/i/web/status/1952461315488043268", type: "Post" },
+            { date: "Jul 29, 2025", url: "https://twitter.com/i/web/status/1950159326024286210", type: "Post" },
+            { date: "Jul 28, 2025", url: "https://twitter.com/i/web/status/1949758795866951769", type: "Post" },
+            { date: "Jul 26, 2025", url: "https://twitter.com/i/web/status/1949136049491304493", type: "Post" },
+            { date: "Jul 21, 2025", url: "https://twitter.com/i/web/status/1947286077309346061", type: "Post" },
+            { date: "Jul 16, 2025", url: "https://twitter.com/i/web/status/1945365182877700525", type: "Post" },
+            { date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944815036758663354", type: "Post" },
+            { date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944814647145554167", type: "Post" },
+            { date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944788164557615226", type: "Post" },
+            { date: "Jul 13, 2025", url: "https://twitter.com/i/web/status/1944327678833590305", type: "Post" },
+            { date: "Jul 11, 2025", url: "https://twitter.com/i/web/status/1943648410604593481", type: "Post" },
+            { date: "Jul 7, 2025", url: "https://twitter.com/i/web/status/1942225903565586530", type: "Post" },
+            { date: "Jul 7, 2025", url: "https://twitter.com/i/web/status/1942148995981189437", type: "Post" },
+            { date: "Jul 7, 2025", url: "https://twitter.com/i/web/status/1942148882072232279", type: "Post" },
+            { date: "Jun 30, 2025", url: "https://twitter.com/i/web/status/1939803487757300071", type: "Post" },
+            { date: "Jun 30, 2025", url: "https://twitter.com/i/web/status/1939803464290496722", type: "Post" },
+            { date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938618088934535343", type: "Post" },
+            { date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938568440891232753", type: "Post" },
+            { date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938547894417526966", type: "Post" },
+            { date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938547857092456647", type: "Post" },
+            { date: "Jun 26, 2025", url: "https://twitter.com/i/web/status/1938220682631922161", type: "Post" },
+            { date: "Jun 25, 2025", url: "https://twitter.com/i/web/status/1937916873305190570", type: "Post" },
+            { date: "Jun 22, 2025", url: "https://twitter.com/i/web/status/1936763125220663300", type: "Post" },
+            { date: "Jun 21, 2025", url: "https://twitter.com/i/web/status/1936343312551817576", type: "Post" },
+            { date: "Jun 12, 2025", url: "https://twitter.com/i/web/status/1933235429572059414", type: "Post" },
+            { date: "Jun 12, 2025", url: "https://twitter.com/i/web/status/1933235215591161992", type: "Post" },
+            { date: "Jun 10, 2025", url: "https://twitter.com/i/web/status/1932416666723635324", type: "Post" },
+            { date: "May 31, 2025", url: "https://twitter.com/i/web/status/1928880115573813306", type: "Post" },
+            { date: "May 30, 2025", url: "https://twitter.com/i/web/status/1928344403216658651", type: "Post" },
+            { date: "May 30, 2025", url: "https://twitter.com/i/web/status/1928337502290452792", type: "Post" },
+            { date: "May 26, 2025", url: "https://twitter.com/i/web/status/1926870558299373948", type: "Post" },
+            { date: "May 25, 2025", url: "https://twitter.com/i/web/status/1926610979183374746", type: "Post" },
+            { date: "May 25, 2025", url: "https://twitter.com/i/web/status/1926603963521998956", type: "Post" },
+            { date: "May 22, 2025", url: "https://twitter.com/i/web/status/1925495465505661155", type: "Post" },
+            { date: "May 22, 2025", url: "https://twitter.com/i/web/status/1925494939116306804", type: "Post" },
+            { date: "May 18, 2025", url: "https://twitter.com/i/web/status/1924052840743412080", type: "Post" },
+            { date: "May 16, 2025", url: "https://twitter.com/i/web/status/1923363551550279795", type: "Post" },
+            { date: "May 16, 2025", url: "https://twitter.com/i/web/status/19232605000176354", type: "Post" },
+            { date: "May 15, 2025", url: "https://twitter.com/i/web/status/192291364030431282", type: "Post" },
+            { date: "May 15, 2025", url: "https://twitter.com/i/web/status/1922912184041959736", type: "Post" },
+            { date: "May 14, 2025", url: "https://twitter.com/i/web/status/1922722013191221619", type: "Post" },
+            { date: "May 9, 2025", url: "https://twitter.com/i/web/status/1920883131978052007", type: "Post" },
+            { date: "May 9, 2025", url: "https://twitter.com/i/web/status/1920745390678081556", type: "Post" },
+            { date: "May 8, 2025", url: "https://twitter.com/i/web/status/1920535009137463467", type: "Post" },
+            { date: "May 7, 2025", url: "https://twitter.com/i/web/status/19201441250572863", type: "Post" },
+            { date: "May 3, 2025", url: "https://twitter.com/i/web/status/19187351060862365", type: "Post" },
+            { date: "Apr 30, 2025", url: "https://twitter.com/i/web/status/1917637769695838475", type: "Post" },
+            { date: "Apr 30, 2025", url: "https://twitter.com/i/web/status/1917520123167904158", type: "Post" },
+            { date: "Apr 29, 2025", url: "https://twitter.com/i/web/status/1917339588579975311", type: "Post" },
+            { date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916887089800454209", type: "Post" },
+            { date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916775045344461308", type: "Post" },
+            { date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916774034815041592", type: "Post" },
+            { date: "Apr 26, 2025", url: "https://twitter.com/i/web/status/1916144808017474020", type: "Post" },
+            { date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915353719475998825", type: "Post" },
+            { date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915345489286795279", type: "Post" },
+            { date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915194880885731612", type: "Post" },
+            { date: "Apr 21, 2025", url: "https://twitter.com/i/web/status/1914237655736287355", type: "Post" },
+            { date: "Apr 18, 2025", url: "https://twitter.com/i/web/status/1913130424135540816", type: "Post" },
+            { date: "Apr 17, 2025", url: "https://twitter.com/i/web/status/1912787303811924084", type: "Post" },
+            { date: "Apr 14, 2025", url: "https://twitter.com/i/web/status/1911767239839133998", type: "Post" },
+            { date: "Apr 12, 2025", url: "https://twitter.com/i/web/status/1911005976414535924", type: "Post" },
+            { date: "Apr 11, 2025", url: "https://twitter.com/i/web/status/1910708186220310850", type: "Post" },
+            { date: "Apr 2, 2025", url: "https://twitter.com/i/web/status/1907517967086047602", type: "Post" },
+            { date: "Mar 28, 2025", url: "https://twitter.com/i/web/status/1905611005582807384", type: "Post" },
+            { date: "Mar 28, 2025", url: "https://twitter.com/i/web/status/1905527528346841194", type: "Post" },
+            { date: "Mar 27, 2025", url: "https://twitter.com/i/web/status/1905392191817593326", type: "Post" },
+            { date: "Mar 27, 2025", url: "https://twitter.com/i/web/status/1905303796747485427", type: "Post" },
+            { date: "Mar 26, 2025", url: "https://twitter.com/i/web/status/1904991349058732505", type: "Post" },
+            { date: "Mar 24, 2025", url: "https://twitter.com/i/web/status/1904200516495651085", type: "Post" },
+            { date: "Mar 22, 2025", url: "https://twitter.com/i/web/status/1903381776644379056", type: "Post" },
+            { date: "Mar 21, 2025", url: "https://twitter.com/i/web/status/1903076185036272121", type: "Post" },
+            { date: "Mar 19, 2025", url: "https://twitter.com/i/web/status/1902472903553065138", type: "Post" },
+            { date: "Mar 18, 2025", url: "https://twitter.com/i/web/status/1901960489183117391", type: "Post" },
+            { date: "Mar 18, 2025", url: "https://twitter.com/i/web/status/1901959448517628144", type: "Post" },
+            { date: "Mar 16, 2025", url: "https://twitter.com/i/web/status/1901387040262115762", type: "Post" },
+            { date: "Mar 15, 2025", url: "https://twitter.com/i/web/status/1900700398106611951", type: "Post" },
+            { date: "Mar 12, 2025", url: "https://twitter.com/i/web/status/1899670165203071477", type: "Post" },
+            { date: "Mar 10, 2025", url: "https://twitter.com/i/web/status/1899220506676527446", type: "Post" },
+            { date: "Mar 8, 2025", url: "https://twitter.com/i/web/status/1898487654347419794", type: "Post" },
+            { date: "Mar 8, 2025", url: "https://twitter.com/i/web/status/1898429181433680294", type: "Post" },
+            { date: "Mar 5, 2025", url: "https://twitter.com/i/web/status/1897285590418382919", type: "Post" },
+            { date: "Mar 4, 2025", url: "https://twitter.com/i/web/status/1896824986108850572", type: "Post" },
+            { date: "Mar 2, 2025", url: "https://twitter.com/i/web/status/1896341702551695809", type: "Post" },
+            { date: "Mar 1, 2025", url: "https://twitter.com/i/web/status/1895627743309807836", type: "Post" },
+            { date: "Feb 28, 2025", url: "https://twitter.com/i/web/status/1895618228455632899", type: "Post" },
+            { date: "Feb 28, 2025", url: "https://twitter.com/i/web/status/1895465977485369700", type: "Post" },
+            { date: "Feb 26, 2025", url: "https://twitter.com/i/web/status/1894883947357540374", type: "Post" },
+            { date: "Feb 23, 2025", url: "https://twitter.com/i/web/status/1893708882767143325", type: "Post" },
+            { date: "Feb 21, 2025", url: "https://twitter.com/i/web/status/1892928803183153195", type: "Post" },
+            { date: "Feb 14, 2025", url: "https://twitter.com/i/web/status/1890530338037706935", type: "Post" },
+            { date: "Feb 11, 2025", url: "https://twitter.com/i/web/status/1889445183181246490", type: "Post" },
+            { date: "Feb 11, 2025", url: "https://twitter.com/i/web/status/1889339651804053765", type: "Post" },
+            { date: "Feb 10, 2025", url: "https://twitter.com/i/web/status/1888840570329522579", type: "Post" },
+            { date: "Feb 9, 2025", url: "https://twitter.com/i/web/status/1888584637712093670", type: "Post" },
+            { date: "Feb 8, 2025", url: "https://twitter.com/i/web/status/1888376401549758970", type: "Post" },
+            { date: "Feb 8, 2025", url: "https://twitter.com/i/web/status/1888278420364120543", type: "Post" },
+            { date: "Feb 6, 2025", url: "https://twitter.com/i/web/status/1887611381081624982", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887186226748285030", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887135623632584788", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887135527796719849", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887124328518406285", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887108426515329333", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887094671819628976", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887088258527408188", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887088026821505311", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887087961830834628", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887087901889962378", type: "Post" },
+            { date: "Feb 5, 2025", url: "https://twitter.com/i/web/status/1887038245101289589", type: "Post" },
+            { date: "Feb 4, 2025", url: "https://twitter.com/i/web/status/1886900182551306641", type: "Post" },
+            { date: "Feb 4, 2025", url: "https://twitter.com/i/web/status/1886887030329925689", type: "Post" },
+            { date: "Feb 4, 2025", url: "https://twitter.com/i/web/status/1886659951453405611", type: "Post" },
+            { date: "Feb 2, 2025", url: "https://twitter.com/i/web/status/1886080824665075770", type: "Post" },
+            { date: "Feb 2, 2025", url: "https://twitter.com/i/web/status/1886046778522227155", type: "Post" },
+            { date: "Feb 2, 2025", url: "https://twitter.com/i/web/status/1885961160186298584", type: "Post" },
+            { date: "Feb 1, 2025", url: "https://twitter.com/i/web/status/1885615262767993009", type: "Post" },
+            { date: "Jan 27, 2025", url: "https://twitter.com/i/web/status/1883795460974108728", type: "Post" },
+            { date: "Jan 26, 2025", url: "https://twitter.com/i/web/status/1883588159243722835", type: "Post" },
+            { date: "Jan 22, 2025", url: "https://twitter.com/i/web/status/1882138520523088202", type: "Post" },
+            { date: "Jan 22, 2025", url: "https://twitter.com/i/web/status/1882138269917515897", type: "Post" },
+            { date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879093528619552938", type: "Post" },
+            { date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879093444955799943", type: "Post" },
+            { date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879090258383650906", type: "Post" },
+            { date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879086646311993766", type: "Post" },
+            { date: "Jan 13, 2025", url: "https://twitter.com/i/web/status/1878722987094102142", type: "Post" },
+            { date: "Jan 12, 2025", url: "https://twitter.com/i/web/status/1878512720548352338", type: "Post" },
 
             // 2024 DATA
-            { user: "M&М", date: "Dec 30, 2024", url: "https://twitter.com/i/web/status/1873686345539064311" },
-            { user: "M&М", date: "Dec 27, 2024", url: "https://twitter.com/i/web/status/1872584176379351494" },
-            { user: "M&М", date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834054386982481938" },
-            { user: "M&М", date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834054034770329777" },
-            { user: "M&М", date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834053815164960832" },
-            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833803359729455414" },
-            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833797136959390168" },
-            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833772981601837084" },
-            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833772596967383052" },
-            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833729365504348189" },
-            { user: "M&М", date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833729277755322477" },
-            { user: "M&М", date: "Sep 10, 2024", url: "https://x.com/i/web/status/1833282512769937622" },
-            { user: "M&М", date: "Sep 9, 2024", url: "https://x.com/i/web/status/1833262420388634650" },
-            { user: "M&М", date: "Sep 9, 2024", url: "https://x.com/i/web/status/1833164318940053828" },
-            { user: "M&М", date: "Sep 8, 2024", url: "https://x.com/i/web/status/1832656565125488785" },
-            { user: "M&М", date: "Sep 7, 2024", url: "https://x.com/i/web/status/1832301887107768476" },
-            { user: "M&М", date: "Sep 6, 2024", url: "https://x.com/i/web/status/1832092683873255856" },
-            { user: "M&М", date: "Sep 6, 2024", url: "https://x.com/i/web/status/1831947752928137293" },
-            { user: "M&М", date: "Sep 5, 2024", url: "https://x.com/i/web/status/1831681929969619103" },
-            { user: "M&М", date: "Sep 5, 2024", url: "https://x.com/i/web/status/1831681657545322543" },
-            { user: "M&М", date: "Sep 5, 2024", url: "https://x.com/i/web/status/1831660387298615688" },
-            { user: "M&М", date: "Sep 4, 2024", url: "https://x.com/i/web/status/1831233989627019321" },
-            { user: "M&М", date: "Sep 4, 2024", url: "https://x.com/i/web/status/1831233815236194355" },
-            { user: "M&М", date: "Sep 4, 2024", url: "https://x.com/i/web/status/1831224639139287302" },
-            { user: "M&М", date: "Sep 3, 2024", url: "https://x.com/i/web/status/1830857239671796110" },
-            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830673919667511380" },
-            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830573875626729666" },
-            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830571890471026741" },
-            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830568268156801243" },
-            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830559238654988406" },
-            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830543806678053232" },
-            { user: "M&М", date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830543038470336963" },
-            { user: "M&М", date: "Aug 31, 2024", url: "https://x.com/i/web/status/1829972228428984485" },
-            { user: "M&М", date: "Aug 29, 2024", url: "https://x.com/i/web/status/1829254072702251447" },
-            { user: "M&М", date: "Aug 27, 2024", url: "https://x.com/i/web/status/1828523594982322481" },
-            { user: "M&М", date: "Aug 27, 2024", url: "https://x.com/i/web/status/1828522847507271760" },
-            { user: "M&М", date: "Aug 21, 2024", url: "https://x.com/i/web/status/1826265144810479837" },
-            { user: "M&М", date: "Aug 21, 2024", url: "https://x.com/i/web/status/1826221496617886124" },
-            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825940175094165810" },
-            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825938770115572132" },
-            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936958692143289" },
-            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936881793773619" },
-            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936544844362202" },
-            { user: "M&М", date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825924436198879492" },
-            { user: "M&М", date: "Aug 19, 2024", url: "https://x.com/i/web/status/1825624796089946418" },
-            { user: "M&М", date: "Aug 19, 2024", url: "https://x.com/i/web/status/1825568442100945074" },
-            { user: "M&М", date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824503875891761339" },
-            { user: "M&М", date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824495451829309911" },
-            { user: "M&М", date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824489516477870432" },
-            { user: "M&М", date: "Aug 15, 2024", url: "https://x.com/i/web/status/1824074684016599421" },
-            { user: "M&М", date: "Aug 15, 2024", url: "https://x.com/i/web/status/1824050325000429799" },
-            { user: "M&М", date: "Aug 15, 2024", url: "https://x.com/i/web/status/1823967556903882975" },
-            { user: "M&М", date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823746346584625311" },
-            { user: "M&М", date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823746239545921631" },
-            { user: "M&М", date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823736305186169326" },
-            { user: "M&М", date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823657147743207804" },
-            { user: "M&М", date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823426144055779533" },
-            { user: "M&М", date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823420076017475599" },
-            { user: "M&М", date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823411073481163049" },
-            { user: "M&М", date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823284541550678396" },
-            { user: "M&М", date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823279911945064750" },
-            { user: "M&М", date: "Aug 10, 2024", url: "https://x.com/i/web/status/1823279911945064750" },
-            { user: "M&М", date: "Aug 10, 2024", url: "https://x.com/i/web/status/1822378512805707951" },
-            { user: "M&М", date: "Aug 10, 2024", url: "https://x.com/i/web/status/1822209915496071333" },
-            { user: "M&М", date: "Aug 9, 2024", url: "https://x.com/i/web/status/1822209915496071333" },
-            { user: "M&М", date: "Aug 9, 2024", url: "https://x.com/i/web/status/1821813226276823293" },
-            { user: "M&М", date: "Aug 8, 2024", url: "https://x.com/i/web/status/1821473938985062860" },
-            { user: "M&М", date: "Aug 7, 2024", url: "https://x.com/i/web/status/1821235560976945515" },
-            { user: "M&М", date: "Aug 7, 2024", url: "https://x.com/i/web/status/1821172698401161377" },
-            { user: "M&М", date: "Aug 7, 2024", url: "https://x.com/i/web/status/1821113978556186796" },
-            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820913253775802869" },
-            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820760011439825348" },
-            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820727440127267227" },
-            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820727019463692691" },
-            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820725589751251176" },
-            { user: "M&М", date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820724748281684302" },
-            { user: "M&М", date: "Aug 5, 2024", url: "https://x.com/i/web/status/1820443781289628069" },
-            { user: "M&М", date: "Aug 4, 2024", url: "https://x.com/i/web/status/1820219365893054467" },
-            { user: "M&М", date: "Aug 4, 2024", url: "https://x.com/i/web/status/1819979801639137652" },
-            { user: "M&М", date: "Aug 3, 2024", url: "https://x.com/i/web/status/1819701924788101403" },
-            { user: "M&М", date: "Aug 3, 2024", url: "https://x.com/i/web/status/1819701765366800483" },
-            { user: "M&М", date: "Aug 2, 2024", url: "https://x.com/i/web/status/1819462541338378243" },
-            { user: "M&М", date: "Aug 1, 2024", url: "https://x.com/i/web/status/1819043721628856654" },
-            { user: "M&М", date: "Aug 1, 2024", url: "https://x.com/i/web/status/1819041500031836565" },
-            { user: "M&М", date: "Aug 1, 2024", url: "https://x.com/i/web/status/1819041157042876622" },
-            { user: "M&М", date: "Aug 1, 2024", url: "https://x.com/i/web/status/1818970981488095367" },
-            { user: "M&М", date: "Aug 1, 2024", url: "https://x.com/i/web/status/1818921780297245149" },
-            { user: "M&М", date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818733775565599028" },
-            { user: "M&М", date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818588650214494657" },
-            { user: "M&М", date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818586394459078799" },
-            { user: "M&М", date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818391628303728827" },
-            { user: "M&М", date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818390832761979135" },
-            { user: "M&М", date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818349879384850871" },
-            { user: "M&М", date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818310768133046306" },
-            { user: "M&М", date: "Jul 29, 2024", url: "https://x.com/i/web/status/1817933933155143721" },
-            { user: "M&М", date: "Jul 29, 2024", url: "https://x.com/i/web/status/1818028758319906932" },
-            { user: "M&М", date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816877458664075596" },
-            { user: "M&М", date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816805110816612368" },
-            { user: "M&М", date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816798215968014412" },
-            { user: "M&М", date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816741721599844391" },
-            { user: "M&М", date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816698141833322538" },
-            { user: "M&М", date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816216107771887882" },
-            { user: "M&М", date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816147238088810936" },
-            { user: "M&М", date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816024007549870472" },
-            { user: "M&М", date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815781147906843023" },
-            { user: "M&М", date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815662255704330673" },
-            { user: "M&М", date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815617292686041406" },
-            { user: "M&М", date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815617186163052725" },
-            { user: "M&М", date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815464709531070898" },
-            { user: "M&М", date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437598833193069" },
-            { user: "M&М", date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437582064353335" },
-            { user: "M&М", date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437554901983646" },
-            { user: "M&М", date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815399590759129224" },
-            { user: "M&М", date: "Jul 21, 2024", url: "https://x.com/i/web/status/1815086382026780709" },
-            { user: "M&М", date: "Jul 21, 2024", url: "https://x.com/i/web/status/1815000783924154847" },
-            { user: "M&М", date: "Jul 21, 2024", url: "https://x.com/i/web/status/1814950885702709282" },
-            { user: "M&М", date: "Jul 20, 2024", url: "https://x.com/i/web/status/1814696384559272257" },
-            { user: "M&М", date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814351862071468361" },
-            { user: "M&М", date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814224967883493433" },
-            { user: "M&М", date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814204375369175171" },
-            { user: "M&М", date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814177810241531994" },
-            { user: "M&М", date: "Jul 18, 2024", url: "https://x.com/i/web/status/1813935093289021492" },
-            { user: "M&М", date: "Jul 18, 2024", url: "https://x.com/i/web/status/1813896052397019351" },
-            { user: "M&М", date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813574619472822725" },
-            { user: "M&М", date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813476282685858066" },
-            { user: "M&М", date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813448170568909114" },
-            { user: "M&М", date: "Jul 16, 2024", url: "https://x.com/i/web/status/1813192457636458569" },
-            { user: "M&М", date: "Jul 16, 2024", url: "https://x.com/i/web/status/1813151780160618892" },
-            { user: "M&М", date: "Jul 15, 2024", url: "https://x.com/i/web/status/1812733919369805922" },
-            { user: "M&М", date: "Jul 14, 2024", url: "https://x.com/i/web/status/1812531549507584302" },
-            { user: "M&М", date: "Jul 13, 2024", url: "https://x.com/i/web/status/1812101444029325362" },
-            { user: "M&М", date: "Jul 13, 2024", url: "https://x.com/i/web/status/1812026261503369511" },
-            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811808621086281969" },
-            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788561269530842" },
-            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788474803962012" },
-            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788329572008294" },
-            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811629885846065615" },
-            { user: "M&М", date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811629829000774023" },
-            { user: "M&М", date: "Jul 11, 2024", url: "https://x.com/i/web/status/1811480185255895077" },
-            { user: "M&М", date: "Jul 11, 2024", url: "https://x.com/i/web/status/1811289918901018985" },
-            { user: "M&М", date: "Jul 10, 2024", url: "https://x.com/i/web/status/1811088931259031992" },
-            { user: "M&М", date: "Jul 9, 2024", url: "https://x.com/i/web/status/1810636866582126753" },
-            { user: "M&М", date: "Jul 8, 2024", url: "https://x.com/i/web/status/1810208870599365022" },
-            { user: "M&М", date: "Jul 7, 2024", url: "https://x.com/i/web/status/1809942669080113427" },
-            { user: "M&М", date: "Jul 7, 2024", url: "https://x.com/i/web/status/1809942287847428379" },
-            { user: "M&М", date: "Jul 6, 2024", url: "https://x.com/i/web/status/1809456717853319197" },
-            { user: "M&М", date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809244046205780190" },
-            { user: "M&М", date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809243796716101692" },
-            { user: "M&М", date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809081821352603750" },
-            { user: "M&М", date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809080732138017084" },
-            { user: "M&М", date: "Jul 4, 2024", url: "https://x.com/i/web/status/1808760695770485138" },
-            { user: "M&М", date: "Jul 3, 2024", url: "https://x.com/i/web/status/1808527263920439469" },
-            { user: "M&М", date: "Jul 2, 2024", url: "https://x.com/i/web/status/1808113094998065411" },
-            { user: "M&М", date: "Jul 1, 2024", url: "https://x.com/i/web/status/1807665095167578145" },
-            { user: "M&М", date: "Jul 1, 2024", url: "https://x.com/i/web/status/1807664630296097255" }
+            { date: "Dec 30, 2024", url: "https://twitter.com/i/web/status/1873686345539064311", type: "Post" },
+            { date: "Dec 27, 2024", url: "https://twitter.com/i/web/status/1872584176379351494", type: "Post" },
+            { date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834054386982481938", type: "Post" },
+            { date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834054034770329777", type: "Post" },
+            { date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834053815164960832", type: "Post" },
+            { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833803359729455414", type: "Post" },
+            { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833797136959390168", type: "Post" },
+            { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833772981601837084", type: "Post" },
+            { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833772596967383052", type: "Post" },
+            { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833729365504348189", type: "Post" },
+            { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833729277755322477", type: "Post" },
+            { date: "Sep 10, 2024", url: "https://x.com/i/web/status/1833282512769937622", type: "Post" },
+            { date: "Sep 9, 2024", url: "https://x.com/i/web/status/1833262420388634650", type: "Post" },
+            { date: "Sep 9, 2024", url: "https://x.com/i/web/status/1833164318940053828", type: "Post" },
+            { date: "Sep 8, 2024", url: "https://x.com/i/web/status/1832656565125488785", type: "Post" },
+            { date: "Sep 7, 2024", url: "https://x.com/i/web/status/1832301887107768476", type: "Post" },
+            { date: "Sep 6, 2024", url: "https://x.com/i/web/status/1832092683873255856", type: "Post" },
+            { date: "Sep 6, 2024", url: "https://x.com/i/web/status/1831947752928137293", type: "Post" },
+            { date: "Sep 5, 2024", url: "https://x.com/i/web/status/1831681929969619103", type: "Post" },
+            { date: "Sep 5, 2024", url: "https://x.com/i/web/status/1831681657545322543", type: "Post" },
+            { date: "Sep 5, 2024", url: "https://x.com/i/web/status/1831660387298615688", type: "Post" },
+            { date: "Sep 4, 2024", url: "https://x.com/i/web/status/1831233989627019321", type: "Post" },
+            { date: "Sep 4, 2024", url: "https://x.com/i/web/status/1831233815236194355", type: "Post" },
+            { date: "Sep 4, 2024", url: "https://x.com/i/web/status/1831224639139287302", type: "Post" },
+            { date: "Sep 3, 2024", url: "https://x.com/i/web/status/1830857239671796110", type: "Post" },
+            { date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830673919667511380", type: "Post" },
+            { date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830573875626729666", type: "Post" },
+            { date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830571890471026741", type: "Post" },
+            { date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830568268156801243", type: "Post" },
+            { date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830559238654988406", type: "Post" },
+            { date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830543806678053232", type: "Post" },
+            { date: "Sep 2, 2024", url: "https://x.com/i/web/status/1830543038470336963", type: "Post" },
+            { date: "Aug 31, 2024", url: "https://x.com/i/web/status/1829972228428984485", type: "Post" },
+            { date: "Aug 29, 2024", url: "https://x.com/i/web/status/1829254072702251447", type: "Post" },
+            { date: "Aug 27, 2024", url: "https://x.com/i/web/status/1828523594982322481", type: "Post" },
+            { date: "Aug 27, 2024", url: "https://x.com/i/web/status/1828522847507271760", type: "Post" },
+            { date: "Aug 21, 2024", url: "https://x.com/i/web/status/1826265144810479837", type: "Post" },
+            { date: "Aug 21, 2024", url: "https://x.com/i/web/status/1826221496617886124", type: "Post" },
+            { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825940175094165810", type: "Post" },
+            { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825938770115572132", type: "Post" },
+            { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936958692143289", type: "Post" },
+            { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936881793773619", type: "Post" },
+            { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936544844362202", type: "Post" },
+            { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825924436198879492", type: "Post" },
+            { date: "Aug 19, 2024", url: "https://x.com/i/web/status/1825624796089946418", type: "Post" },
+            { date: "Aug 19, 2024", url: "https://x.com/i/web/status/1825568442100945074", type: "Post" },
+            { date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824503875891761339", type: "Post" },
+            { date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824495451829309911", type: "Post" },
+            { date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824489516477870432", type: "Post" },
+            { date: "Aug 15, 2024", url: "https://x.com/i/web/status/1824074684016599421", type: "Post" },
+            { date: "Aug 15, 2024", url: "https://x.com/i/web/status/1824050325000429799", type: "Post" },
+            { date: "Aug 15, 2024", url: "https://x.com/i/web/status/1823967556903882975", type: "Post" },
+            { date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823746346584625311", type: "Post" },
+            { date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823746239545921631", type: "Post" },
+            { date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823736305186169326", type: "Post" },
+            { date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823657147743207804", type: "Post" },
+            { date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823426144055779533", type: "Post" },
+            { date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823420076017475599", type: "Post" },
+            { date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823411073481163049", type: "Post" },
+            { date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823284541550678396", type: "Post" },
+            { date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823279911945064750", type: "Post" },
+            { date: "Aug 10, 2024", url: "https://x.com/i/web/status/1823279911945064750", type: "Post" },
+            { date: "Aug 10, 2024", url: "https://x.com/i/web/status/1822378512805707951", type: "Post" },
+            { date: "Aug 10, 2024", url: "https://x.com/i/web/status/1822209915496071333", type: "Post" },
+            { date: "Aug 9, 2024", url: "https://x.com/i/web/status/1822209915496071333", type: "Post" },
+            { date: "Aug 9, 2024", url: "https://x.com/i/web/status/1821813226276823293", type: "Post" },
+            { date: "Aug 8, 2024", url: "https://x.com/i/web/status/1821473938985062860", type: "Post" },
+            { date: "Aug 7, 2024", url: "https://x.com/i/web/status/1821235560976945515", type: "Post" },
+            { date: "Aug 7, 2024", url: "https://x.com/i/web/status/1821172698401161377", type: "Post" },
+            { date: "Aug 7, 2024", url: "https://x.com/i/web/status/1821113978556186796", type: "Post" },
+            { date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820913253775802869", type: "Post" },
+            { date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820760011439825348", type: "Post" },
+            { date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820727440127267227", type: "Post" },
+            { date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820727019463692691", type: "Post" },
+            { date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820725589751251176", type: "Post" },
+            { date: "Aug 6, 2024", url: "https://x.com/i/web/status/1820724748281684302", type: "Post" },
+            { date: "Aug 5, 2024", url: "https://x.com/i/web/status/1820443781289628069", type: "Post" },
+            { date: "Aug 4, 2024", url: "https://x.com/i/web/status/1820219365893054467", type: "Post" },
+            { date: "Aug 4, 2024", url: "https://x.com/i/web/status/1819979801639137652", type: "Post" },
+            { date: "Aug 3, 2024", url: "https://x.com/i/web/status/1819701924788101403", type: "Post" },
+            { date: "Aug 3, 2024", url: "https://x.com/i/web/status/1819701765366800483", type: "Post" },
+            { date: "Aug 2, 2024", url: "https://x.com/i/web/status/1819462541338378243", type: "Post" },
+            { date: "Aug 1, 2024", url: "https://x.com/i/web/status/1819043721628856654", type: "Post" },
+            { date: "Aug 1, 2024", url: "https://x.com/i/web/status/1819041500031836565", type: "Post" },
+            { date: "Aug 1, 2024", url: "https://x.com/i/web/status/1819041157042876622", type: "Post" },
+            { date: "Aug 1, 2024", url: "https://x.com/i/web/status/1818970981488095367", type: "Post" },
+            { date: "Aug 1, 2024", url: "https://x.com/i/web/status/1818921780297245149", type: "Post" },
+            { date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818733775565599028", type: "Post" },
+            { date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818588650214494657", type: "Post" },
+            { date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818586394459078799", type: "Post" },
+            { date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818391628303728827", type: "Post" },
+            { date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818390832761979135", type: "Post" },
+            { date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818349879384850871", type: "Post" },
+            { date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818310768133046306", type: "Post" },
+            { date: "Jul 29, 2024", url: "https://x.com/i/web/status/1817933933155143721", type: "Post" },
+            { date: "Jul 29, 2024", url: "https://x.com/i/web/status/1818028758319906932", type: "Post" },
+            { date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816877458664075596", type: "Post" },
+            { date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816805110816612368", type: "Post" },
+            { date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816798215968014412", type: "Post" },
+            { date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816741721599844391", type: "Post" },
+            { date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816698141833322538", type: "Post" },
+            { date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816216107771887882", type: "Post" },
+            { date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816147238088810936", type: "Post" },
+            { date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816024007549870472", type: "Post" },
+            { date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815781147906843023", type: "Post" },
+            { date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815662255704330673", type: "Post" },
+            { date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815617292686041406", type: "Post" },
+            { date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815617186163052725", type: "Post" },
+            { date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815464709531070898", type: "Post" },
+            { date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437598833193069", type: "Post" },
+            { date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437582064353335", type: "Post" },
+            { date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437554901983646", type: "Post" },
+            { date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815399590759129224", type: "Post" },
+            { date: "Jul 21, 2024", url: "https://x.com/i/web/status/1815086382026780709", type: "Post" },
+            { date: "Jul 21, 2024", url: "https://x.com/i/web/status/1815000783924154847", type: "Post" },
+            { date: "Jul 21, 2024", url: "https://x.com/i/web/status/1814950885702709282", type: "Post" },
+            { date: "Jul 20, 2024", url: "https://x.com/i/web/status/1814696384559272257", type: "Post" },
+            { date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814351862071468361", type: "Post" },
+            { date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814224967883493433", type: "Post" },
+            { date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814204375369175171", type: "Post" },
+            { date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814177810241531994", type: "Post" },
+            { date: "Jul 18, 2024", url: "https://x.com/i/web/status/1813935093289021492", type: "Post" },
+            { date: "Jul 18, 2024", url: "https://x.com/i/web/status/1813896052397019351", type: "Post" },
+            { date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813574619472822725", type: "Post" },
+            { date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813476282685858066", type: "Post" },
+            { date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813448170568909114", type: "Post" },
+            { date: "Jul 16, 2024", url: "https://x.com/i/web/status/1813192457636458569", type: "Post" },
+            { date: "Jul 16, 2024", url: "https://x.com/i/web/status/1813151780160618892", type: "Post" },
+            { date: "Jul 15, 2024", url: "https://x.com/i/web/status/1812733919369805922", type: "Post" },
+            { date: "Jul 14, 2024", url: "https://x.com/i/web/status/1812531549507584302", type: "Post" },
+            { date: "Jul 13, 2024", url: "https://x.com/i/web/status/1812101444029325362", type: "Post" },
+            { date: "Jul 13, 2024", url: "https://x.com/i/web/status/1812026261503369511", type: "Post" },
+            { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811808621086281969", type: "Post" },
+            { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788561269530842", type: "Post" },
+            { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788474803962012", type: "Post" },
+            { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788329572008294", type: "Post" },
+            { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811629885846065615", type: "Post" },
+            { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811629829000774023", type: "Post" },
+            { date: "Jul 11, 2024", url: "https://x.com/i/web/status/1811480185255895077", type: "Post" },
+            { date: "Jul 11, 2024", url: "https://x.com/i/web/status/1811289918901018985", type: "Post" },
+            { date: "Jul 10, 2024", url: "https://x.com/i/web/status/1811088931259031992", type: "Post" },
+            { date: "Jul 9, 2024", url: "https://x.com/i/web/status/1810636866582126753", type: "Post" },
+            { date: "Jul 8, 2024", url: "https://x.com/i/web/status/1810208870599365022", type: "Post" },
+            { date: "Jul 7, 2024", url: "https://x.com/i/web/status/1809942669080113427", type: "Post" },
+            { date: "Jul 7, 2024", url: "https://x.com/i/web/status/1809942287847428379", type: "Post" },
+            { date: "Jul 6, 2024", url: "https://x.com/i/web/status/1809456717853319197", type: "Post" },
+            { date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809244046205780190", type: "Post" },
+            { date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809243796716101692", type: "Post" },
+            { date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809081821352603750", type: "Post" },
+            { date: "Jul 5, 2024", url: "https://x.com/i/web/status/1809080732138017084", type: "Post" },
+            { date: "Jul 4, 2024", url: "https://x.com/i/web/status/1808760695770485138", type: "Post" },
+            { date: "Jul 3, 2024", url: "https://x.com/i/web/status/1808527263920439469", type: "Post" },
+            { date: "Jul 2, 2024", url: "https://x.com/i/web/status/1808113094998065411", type: "Post" },
+            { date: "Jul 1, 2024", url: "https://x.com/i/web/status/1807665095167578145", type: "Post" },
+            { date: "Jul 1, 2024", url: "https://x.com/i/web/status/1807664630296097255", type: "Post" }
         ];
 
         let activeYear = 'all';
         let searchQuery = '';
-
-        const monthMap = {
-            "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-            "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
-        };
+        let currentlyDisplayed = [];
 
         function init() {
             renderList();
@@ -475,7 +518,7 @@
             const empty = document.getElementById('emptyState');
             body.innerHTML = '';
 
-            const filtered = rawData.filter(item => {
+            currentlyDisplayed = rawData.filter(item => {
                 const year = getYear(item.date);
                 const matchesYear = activeYear === 'all' || year === activeYear;
                 const matchesSearch = item.date.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -483,58 +526,43 @@
                 return matchesYear && matchesSearch;
             });
 
-            document.getElementById('totalCount').innerText = filtered.length;
+            document.getElementById('totalCount').innerText = currentlyDisplayed.length;
 
-            if (filtered.length === 0) {
+            if (currentlyDisplayed.length === 0) {
                 empty.classList.remove('hidden');
                 return;
             } else {
                 empty.classList.add('hidden');
             }
 
-            // Grouping logic
-            let lastHeader = "";
-
-            filtered.forEach(item => {
-                const parts = item.date.split(' ');
-                const month = parts[0].replace(',', '');
-                const year = parts[parts.length - 1];
-                const currentHeader = `${month} ${year}`;
-
-                if (currentHeader !== lastHeader) {
-                    const separator = document.createElement('tr');
-                    separator.className = "bg-slate-50/80";
-                    separator.innerHTML = `
-                        <td colspan="3" class="px-6 py-2.5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-y border-slate-100 backdrop-blur-sm">
-                            ${currentHeader}
-                        </td>
-                    `;
-                    body.appendChild(separator);
-                    lastHeader = currentHeader;
-                }
-
-                const row = document.createElement('tr');
-                row.className = "list-row transition-colors group border-b border-slate-50";
-                
+            currentlyDisplayed.forEach(item => {
                 const statusId = item.url.split('/').pop();
+                const row = document.createElement('tr');
+                row.className = "list-row group border-b border-slate-50";
 
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-[11px] font-bold text-slate-500 font-mono">
-                        ${item.date}
+                    <td class="px-6 py-5 whitespace-nowrap">
+                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">${item.date}</span>
                     </td>
-                    <td class="px-6 py-4">
-                        <div class="flex flex-col">
-                            <span class="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors">ID: ${statusId}</span>
-                            <span class="text-[11px] text-slate-400 truncate max-w-lg font-mono mt-0.5">${item.url}</span>
+                    <td class="px-6 py-5">
+                        <button onclick="openPreview('${statusId}', '${item.date}', '${item.url}', '${item.type}')" 
+                                class="text-xs font-black text-slate-900 hover:text-blue-600 transition-colors uppercase tracking-tight">
+                            ID: ${statusId}
+                        </button>
+                    </td>
+                    <td class="px-6 py-5">
+                        <div class="flex items-center gap-2">
+                            <span class="px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-black text-slate-500 uppercase">${item.type === 'RT' ? '/RT/' : 'POST'}</span>
+                            <span class="text-[11px] text-slate-500 truncate max-w-md font-medium">Archived Social Media Record from ${item.date}</span>
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-right whitespace-nowrap">
-                        <div class="flex items-center justify-end gap-1.5">
-                            <button onclick="copyToClipboard('${item.url}')" class="w-7 h-7 flex items-center justify-center rounded bg-slate-50 text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition-all" title="Copy URL">
+                    <td class="px-6 py-5 text-right whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="copyToClipboard('${item.url}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition-all">
                                 <i class="fa-solid fa-copy text-xs"></i>
                             </button>
-                            <a href="${item.url}" target="_blank" class="w-7 h-7 flex items-center justify-center rounded bg-slate-100 text-slate-600 hover:text-white hover:bg-slate-900 transition-all shadow-sm" title="Open Link">
-                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            <a href="${item.url}" target="_blank" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-900 text-white shadow-lg hover:scale-105 transition-transform">
+                                <i class="fa-solid fa-external-link text-[10px]"></i>
                             </a>
                         </div>
                     </td>
@@ -547,25 +575,51 @@
             activeYear = year;
             document.querySelectorAll('.year-filter').forEach(btn => {
                 if (btn.dataset.year === year) {
-                    btn.className = "year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-slate-900 text-white shadow-sm";
+                    btn.classList.add('bg-slate-900', 'text-white', 'shadow-md');
+                    btn.classList.remove('bg-white', 'text-slate-400');
                 } else {
-                    btn.className = "year-filter whitespace-nowrap px-4 py-1.5 rounded text-xs font-bold bg-white text-slate-600 border border-slate-200 hover:border-slate-400 transition-all";
+                    btn.classList.remove('bg-slate-900', 'text-white', 'shadow-md');
+                    btn.classList.add('bg-white', 'text-slate-400');
                 }
             });
             renderList();
         }
 
         function setupSearch() {
-            const handler = (e) => {
+            document.getElementById('searchInput').addEventListener('input', (e) => {
                 searchQuery = e.target.value;
-                document.getElementById('searchInput').value = searchQuery;
-                document.getElementById('searchInputMobile').value = searchQuery;
                 renderList();
-            };
-            document.getElementById('searchInput').addEventListener('input', handler);
-            document.getElementById('searchInputMobile').addEventListener('input', handler);
+            });
         }
 
+        /* Modal Logic */
+        function openPreview(id, date, url, type) {
+            const modal = document.getElementById('previewModal');
+            const content = document.getElementById('modalContent');
+            
+            document.getElementById('modalType').innerText = type === 'RT' ? '/RT/ RETWEET' : 'ARCHIVE POST';
+            document.getElementById('modalDate').innerText = date;
+            document.getElementById('modalSnippet').innerText = `Content Archive: Verified documentation of a ${type} entry on the X.com platform.`;
+            document.getElementById('modalStatusId').innerText = `Status ID: ${id}`;
+            document.getElementById('modalFullLink').innerText = url;
+            document.getElementById('modalOpenBtn').href = url;
+
+            modal.classList.remove('pointer-events-none', 'opacity-0');
+            modal.classList.add('opacity-100');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }
+
+        function closePreview() {
+            const modal = document.getElementById('previewModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.classList.remove('opacity-100');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+        }
+
+        /* Utilities */
         function copyToClipboard(text) {
             const el = document.createElement('textarea');
             el.value = text;
@@ -573,29 +627,33 @@
             el.select();
             document.execCommand('copy');
             document.body.removeChild(el);
-            showToast("Copied to clipboard");
+            showToast("Copied Link");
         }
 
         function copyAllLinks() {
-            const links = rawData.map(item => `${item.date}: ${item.url}`).join('\n');
+            const links = currentlyDisplayed.map(i => `${i.date} [${i.type}]: ${i.url}`).join('\n');
             const el = document.createElement('textarea');
             el.value = links;
             document.body.appendChild(el);
             el.select();
             document.execCommand('copy');
             document.body.removeChild(el);
-            showToast("Consolidated database copied");
+            showToast(`${currentlyDisplayed.length} Links Copied`);
         }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
             document.getElementById('toastMsg').innerText = msg;
-            toast.classList.replace('translate-y-20', 'translate-y-0');
+            toast.classList.replace('translate-y-24', 'translate-y-0');
             toast.classList.replace('opacity-0', 'opacity-100');
             setTimeout(() => {
-                toast.classList.replace('translate-y-0', 'translate-y-20');
+                toast.classList.replace('translate-y-0', 'translate-y-24');
                 toast.classList.replace('opacity-100', 'opacity-0');
             }, 2500);
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('previewModal')) closePreview();
         }
 
         window.onload = init;
