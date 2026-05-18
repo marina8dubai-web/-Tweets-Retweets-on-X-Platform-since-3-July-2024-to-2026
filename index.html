@@ -1,0 +1,837 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReferenceX — Marina Murkalieva X Archive</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #ffffff;
+    color: #111111;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 56px 48px 80px;
+  }
+
+  /* Header */
+  .doc-header {
+    border-bottom: 2px solid #111;
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+  }
+
+  .doc-header .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 8px;
+  }
+
+  .doc-header h1 {
+    font-size: 32px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    line-height: 1.1;
+  }
+
+  .doc-header p {
+    color: #555;
+    font-size: 14px;
+    margin-top: 6px;
+  }
+
+  /* Stats */
+  .stats {
+    display: flex;
+    border: 1px solid #ccc;
+    margin-bottom: 28px;
+  }
+
+  .stat {
+    flex: 1;
+    padding: 16px 24px;
+    border-right: 1px solid #ccc;
+  }
+
+  .stat:last-child { border-right: none; }
+
+  .stat .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .stat .value {
+    font-size: 28px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+    color: #111;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+
+  .search-wrap {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+    pointer-events: none;
+  }
+
+  input[type="search"] {
+    background: #fff;
+    border: 1px solid #bbb;
+    color: #111;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 8px 12px 8px 34px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+    border-radius: 0;
+  }
+
+  input[type="search"]:focus { border-color: #111; }
+
+  /* Year filter buttons */
+  .year-filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .yr-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 16px;
+    border: 1px solid #bbb;
+    background: #fff;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 0;
+    letter-spacing: 0.05em;
+  }
+
+  .yr-btn:hover { border-color: #111; color: #111; }
+  .yr-btn.active { background: #111; color: #fff; border-color: #111; }
+
+  .btn {
+    background: #fff;
+    border: 1px solid #bbb;
+    color: #333;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    border-radius: 0;
+  }
+
+  .btn:hover { background: #111; color: #fff; border-color: #111; }
+
+  /* Results info */
+  .results-info {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 12px;
+  }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: #666;
+    padding: 10px 14px;
+    text-align: left;
+    border-top: 1px solid #111;
+    border-bottom: 1px solid #ccc;
+    background: #fafafa;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  tbody tr { border-bottom: 1px solid #ebebeb; }
+  tbody tr:hover { background: #f7f7f7; }
+
+  td { padding: 9px 14px; vertical-align: middle; }
+
+  .date-cell {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .id-cell {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: #111;
+    word-break: break-all;
+  }
+
+  .id-cell a {
+    color: #222;
+    text-decoration: underline;
+    text-decoration-color: #bbb;
+    text-underline-offset: 2px;
+  }
+
+  .id-cell a:hover { text-decoration-color: #111; }
+
+  .type-badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border: 1px solid #ccc;
+    color: #555;
+    background: #fafafa;
+    white-space: nowrap;
+  }
+
+  .type-badge.rt {
+    border-color: #111;
+    color: #111;
+    background: #f0f0f0;
+  }
+
+  .action-cell { text-align: right; white-space: nowrap; }
+
+  .copy-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: #aaa;
+    background: none;
+    border: 1px solid #e0e0e0;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-right: 4px;
+  }
+
+  .copy-btn:hover { border-color: #111; color: #111; }
+
+  .open-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: #fff;
+    background: #111;
+    border: 1px solid #111;
+    padding: 4px 10px;
+    text-decoration: none;
+    transition: all 0.15s;
+    display: inline-block;
+  }
+
+  .open-btn:hover { background: #333; }
+
+  /* No results */
+  .no-results {
+    text-align: center;
+    padding: 48px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #aaa;
+    border-bottom: 1px solid #ebebeb;
+  }
+
+  /* Footer */
+  .table-footer {
+    border-top: 2px solid #111;
+    padding-top: 10px;
+    margin-top: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: #aaa;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #111;
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 10px 24px;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+  }
+
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media print {
+    .controls, .year-filters, #toast, .action-cell { display: none; }
+    body { font-size: 11px; }
+    .page { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <div class="doc-header">
+    <div class="eyebrow">Marina Murkalieva · X Archive Database</div>
+    <h1>ReferenceX</h1>
+    <p>Tweets &amp; Retweets on X Platform · 3 July 2024 to 2026</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Total Records</div>
+      <div class="value" id="totalCount">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Visible</div>
+      <div class="value" id="visibleCount">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Posts</div>
+      <div class="value" id="postCount">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Retweets</div>
+      <div class="value" id="rtCount">—</div>
+    </div>
+  </div>
+
+  <div class="year-filters">
+    <button class="yr-btn active" onclick="filterYear('all', this)">All Time</button>
+    <button class="yr-btn" onclick="filterYear('2026', this)">2026</button>
+    <button class="yr-btn" onclick="filterYear('2025', this)">2025</button>
+    <button class="yr-btn" onclick="filterYear('2024', this)">2024</button>
+  </div>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="search" id="searchInput" placeholder="Search by date, URL or type…">
+    </div>
+    <button class="btn" onclick="copyFiltered()">Copy Filtered</button>
+    <button class="btn" onclick="resetAll()">Reset</button>
+  </div>
+
+  <div class="results-info" id="resultsInfo"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:130px">Date</th>
+        <th>Link / Status ID</th>
+        <th style="width:80px">Type</th>
+        <th style="width:120px; text-align:right">Action</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div class="no-results" id="noResults" style="display:none">No archived references found.</div>
+
+  <div class="table-footer">
+    <span>ReferenceX · Marina Murkalieva X Archive</span>
+    <span id="footerCount"></span>
+  </div>
+
+</div>
+
+<div id="toast">Copied</div>
+
+<script>
+const DATA = [
+  { date: "Feb 5, 2026",  url: "https://twitter.com/i/web/status/2019536078139781427", type: "Post" },
+  { date: "Feb 5, 2026",  url: "https://twitter.com/i/web/status/2019470086835228763", type: "Post" },
+  { date: "Feb 4, 2026",  url: "https://twitter.com/i/web/status/2019182256124747996", type: "Post" },
+  { date: "Feb 4, 2026",  url: "https://twitter.com/i/web/status/2018968115993014377", type: "RT" },
+  { date: "Feb 4, 2026",  url: "https://twitter.com/i/web/status/2018966286370488507", type: "Post" },
+  { date: "Feb 3, 2026",  url: "https://twitter.com/i/web/status/2018528467835642092", type: "Post" },
+  { date: "Feb 3, 2026",  url: "https://twitter.com/i/web/status/2018528359295205848", type: "RT" },
+  { date: "Feb 2, 2026",  url: "https://twitter.com/i/web/status/2018299510288511249", type: "Post" },
+  { date: "Jan 30, 2026", url: "https://twitter.com/i/web/status/2017163850680832457", type: "Post" },
+  { date: "Jan 29, 2026", url: "https://twitter.com/i/web/status/2016845401916064029", type: "Post" },
+  { date: "Jan 23, 2026", url: "https://twitter.com/i/web/status/2014826864661913915", type: "RT" },
+  { date: "Jan 23, 2026", url: "https://twitter.com/i/web/status/2014785913792917743", type: "Post" },
+  { date: "Jan 2, 2026",  url: "https://twitter.com/i/web/status/2007192596553314605", type: "Post" },
+  { date: "Dec 23, 2025", url: "https://twitter.com/i/web/status/2003601297510138260", type: "Post" },
+  { date: "Dec 16, 2025", url: "https://twitter.com/i/web/status/2001025598123307034", type: "RT" },
+  { date: "Dec 11, 2025", url: "https://twitter.com/i/web/status/1999086694650540332", type: "Post" },
+  { date: "Dec 9, 2025",  url: "https://twitter.com/i/web/status/1998435176032927770", type: "Post" },
+  { date: "Dec 9, 2025",  url: "https://twitter.com/i/web/status/1998425680183517418", type: "Post" },
+  { date: "Dec 9, 2025",  url: "https://twitter.com/i/web/status/1998424719411056698", type: "RT" },
+  { date: "Dec 9, 2025",  url: "https://twitter.com/i/web/status/1998337455473238464", type: "Post" },
+  { date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995235994128503243", type: "Post" },
+  { date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995166088703725818", type: "Post" },
+  { date: "Nov 30, 2025", url: "https://twitter.com/i/web/status/1995164513696641407", type: "Post" },
+  { date: "Nov 26, 2025", url: "https://twitter.com/i/web/status/1993728561803559062", type: "RT" },
+  { date: "Nov 26, 2025", url: "https://twitter.com/i/web/status/1993727984474407197", type: "Post" },
+  { date: "Nov 21, 2025", url: "https://twitter.com/i/web/status/1991852865258959087", type: "Post" },
+  { date: "Nov 16, 2025", url: "https://twitter.com/i/web/status/1990079948015493255", type: "Post" },
+  { date: "Nov 6, 2025",  url: "https://twitter.com/i/web/status/1986442296301117691", type: "Post" },
+  { date: "Nov 6, 2025",  url: "https://twitter.com/i/web/status/1986343621126148309", type: "Post" },
+  { date: "Nov 6, 2025",  url: "https://twitter.com/i/web/status/1986343449805922554", type: "Post" },
+  { date: "Nov 6, 2025",  url: "https://twitter.com/i/web/status/1986343197602091385", type: "Post" },
+  { date: "Nov 5, 2025",  url: "https://twitter.com/i/web/status/1986062405621760477", type: "Post" },
+  { date: "Nov 5, 2025",  url: "https://twitter.com/i/web/status/1985993166101627027", type: "Post" },
+  { date: "Nov 3, 2025",  url: "https://twitter.com/i/web/status/1985426289985990809", type: "Post" },
+  { date: "Nov 3, 2025",  url: "https://twitter.com/i/web/status/1985349995508146661", type: "Post" },
+  { date: "Nov 3, 2025",  url: "https://twitter.com/i/web/status/1985348674546020829", type: "Post" },
+  { date: "Oct 30, 2025", url: "https://twitter.com/i/web/status/1983784217352827068", type: "Post" },
+  { date: "Oct 23, 2025", url: "https://twitter.com/i/web/status/1981345944646893879", type: "Post" },
+  { date: "Oct 15, 2025", url: "https://twitter.com/i/web/status/1978365863909642505", type: "Post" },
+  { date: "Oct 15, 2025", url: "https://twitter.com/i/web/status/1978274505928700114", type: "Post" },
+  { date: "Oct 13, 2025", url: "https://twitter.com/i/web/status/1977639761750983126", type: "Post" },
+  { date: "Oct 12, 2025", url: "https://twitter.com/i/web/status/1977417459780161707", type: "Post" },
+  { date: "Oct 12, 2025", url: "https://twitter.com/i/web/status/1977289504688845155", type: "Post" },
+  { date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976591943892398547", type: "Post" },
+  { date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976591682897396116", type: "Post" },
+  { date: "Oct 10, 2025", url: "https://twitter.com/i/web/status/1976556823005020635", type: "Post" },
+  { date: "Oct 9, 2025",  url: "https://twitter.com/i/web/status/1976201239550623797", type: "Post" },
+  { date: "Oct 7, 2025",  url: "https://twitter.com/i/web/status/1975651190202675408", type: "Post" },
+  { date: "Oct 5, 2025",  url: "https://twitter.com/i/web/status/1974906468160967047", type: "Post" },
+  { date: "Oct 5, 2025",  url: "https://twitter.com/i/web/status/1974758209987694610", type: "Post" },
+  { date: "Sep 11, 2025", url: "https://twitter.com/i/web/status/1966044400879907128", type: "Post" },
+  { date: "Sep 4, 2025",  url: "https://twitter.com/i/web/status/1963506893659222193", type: "Post" },
+  { date: "Sep 4, 2025",  url: "https://twitter.com/i/web/status/1963506557011792269", type: "Post" },
+  { date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1960094387658166629", type: "Post" },
+  { date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1960008074741137734", type: "Post" },
+  { date: "Aug 25, 2025", url: "https://twitter.com/i/web/status/1959998811239330047", type: "Post" },
+  { date: "Aug 23, 2025", url: "https://twitter.com/i/web/status/1959157081086345409", type: "Post" },
+  { date: "Aug 22, 2025", url: "https://twitter.com/i/web/status/1958900583420551314", type: "Post" },
+  { date: "Aug 19, 2025", url: "https://twitter.com/i/web/status/1957736450746687700", type: "Post" },
+  { date: "Aug 19, 2025", url: "https://twitter.com/i/web/status/1957717245976551610", type: "Post" },
+  { date: "Aug 17, 2025", url: "https://twitter.com/i/web/status/1957055360570679442", type: "Post" },
+  { date: "Aug 15, 2025", url: "https://twitter.com/i/web/status/1956241913700286735", type: "Post" },
+  { date: "Aug 15, 2025", url: "https://twitter.com/i/web/status/1956240761160134683", type: "Post" },
+  { date: "Aug 8, 2025",  url: "https://twitter.com/i/web/status/1953895277045461254", type: "Post" },
+  { date: "Aug 4, 2025",  url: "https://twitter.com/i/web/status/1952461315488043268", type: "Post" },
+  { date: "Jul 29, 2025", url: "https://twitter.com/i/web/status/1950159326024286210", type: "Post" },
+  { date: "Jul 28, 2025", url: "https://twitter.com/i/web/status/1949758795866951769", type: "Post" },
+  { date: "Jul 26, 2025", url: "https://twitter.com/i/web/status/1949136049491304493", type: "Post" },
+  { date: "Jul 21, 2025", url: "https://twitter.com/i/web/status/1947286077309346061", type: "Post" },
+  { date: "Jul 16, 2025", url: "https://twitter.com/i/web/status/1945365182877700525", type: "Post" },
+  { date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944815036758663354", type: "Post" },
+  { date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944814647145554167", type: "Post" },
+  { date: "Jul 14, 2025", url: "https://twitter.com/i/web/status/1944788164557615226", type: "Post" },
+  { date: "Jul 13, 2025", url: "https://twitter.com/i/web/status/1944327678833590305", type: "Post" },
+  { date: "Jul 11, 2025", url: "https://twitter.com/i/web/status/1943648410604593481", type: "Post" },
+  { date: "Jul 7, 2025",  url: "https://twitter.com/i/web/status/1942225903565586530", type: "Post" },
+  { date: "Jul 7, 2025",  url: "https://twitter.com/i/web/status/1942148995981189437", type: "Post" },
+  { date: "Jul 7, 2025",  url: "https://twitter.com/i/web/status/1942148882072232279", type: "Post" },
+  { date: "Jun 30, 2025", url: "https://twitter.com/i/web/status/1939803487757300071", type: "Post" },
+  { date: "Jun 30, 2025", url: "https://twitter.com/i/web/status/1939803464290496722", type: "Post" },
+  { date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938618088934535343", type: "Post" },
+  { date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938568440891232753", type: "Post" },
+  { date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938547894417526966", type: "Post" },
+  { date: "Jun 27, 2025", url: "https://twitter.com/i/web/status/1938547857092456647", type: "Post" },
+  { date: "Jun 26, 2025", url: "https://twitter.com/i/web/status/1938220682631922161", type: "Post" },
+  { date: "Jun 25, 2025", url: "https://twitter.com/i/web/status/1937916873305190570", type: "Post" },
+  { date: "Jun 22, 2025", url: "https://twitter.com/i/web/status/1936763125220663300", type: "Post" },
+  { date: "Jun 21, 2025", url: "https://twitter.com/i/web/status/1936343312551817576", type: "Post" },
+  { date: "Jun 12, 2025", url: "https://twitter.com/i/web/status/1933235429572059414", type: "Post" },
+  { date: "Jun 12, 2025", url: "https://twitter.com/i/web/status/1933235215591161992", type: "Post" },
+  { date: "Jun 10, 2025", url: "https://twitter.com/i/web/status/1932416666723635324", type: "Post" },
+  { date: "May 31, 2025", url: "https://twitter.com/i/web/status/1928880115573813306", type: "Post" },
+  { date: "May 30, 2025", url: "https://twitter.com/i/web/status/1928344403216658651", type: "Post" },
+  { date: "May 30, 2025", url: "https://twitter.com/i/web/status/1928337502290452792", type: "Post" },
+  { date: "May 26, 2025", url: "https://twitter.com/i/web/status/1926870558299373948", type: "Post" },
+  { date: "May 25, 2025", url: "https://twitter.com/i/web/status/1926610979183374746", type: "Post" },
+  { date: "May 25, 2025", url: "https://twitter.com/i/web/status/1926603963521998956", type: "Post" },
+  { date: "May 22, 2025", url: "https://twitter.com/i/web/status/1925495465505661155", type: "Post" },
+  { date: "May 22, 2025", url: "https://twitter.com/i/web/status/1925494939116306804", type: "Post" },
+  { date: "May 18, 2025", url: "https://twitter.com/i/web/status/1924052840743412080", type: "Post" },
+  { date: "May 16, 2025", url: "https://twitter.com/i/web/status/1923363551550279795", type: "Post" },
+  { date: "May 16, 2025", url: "https://twitter.com/i/web/status/19232605000176354",   type: "Post" },
+  { date: "May 15, 2025", url: "https://twitter.com/i/web/status/192291364030431282",  type: "Post" },
+  { date: "May 15, 2025", url: "https://twitter.com/i/web/status/1922912184041959736", type: "Post" },
+  { date: "May 14, 2025", url: "https://twitter.com/i/web/status/1922722013191221619", type: "Post" },
+  { date: "May 9, 2025",  url: "https://twitter.com/i/web/status/1920883131978052007", type: "Post" },
+  { date: "May 9, 2025",  url: "https://twitter.com/i/web/status/1920745390678081556", type: "Post" },
+  { date: "May 8, 2025",  url: "https://twitter.com/i/web/status/1920535009137463467", type: "Post" },
+  { date: "May 7, 2025",  url: "https://twitter.com/i/web/status/19201441250572863",   type: "Post" },
+  { date: "May 3, 2025",  url: "https://twitter.com/i/web/status/19187351060862365",   type: "Post" },
+  { date: "Apr 30, 2025", url: "https://twitter.com/i/web/status/1917637769695838475", type: "Post" },
+  { date: "Apr 30, 2025", url: "https://twitter.com/i/web/status/1917520123167904158", type: "Post" },
+  { date: "Apr 29, 2025", url: "https://twitter.com/i/web/status/1917339588579975311", type: "Post" },
+  { date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916887089800454209", type: "Post" },
+  { date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916775045344461308", type: "Post" },
+  { date: "Apr 28, 2025", url: "https://twitter.com/i/web/status/1916774034815041592", type: "Post" },
+  { date: "Apr 26, 2025", url: "https://twitter.com/i/web/status/1916144808017474020", type: "Post" },
+  { date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915353719475998825", type: "Post" },
+  { date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915345489286795279", type: "Post" },
+  { date: "Apr 24, 2025", url: "https://twitter.com/i/web/status/1915194880885731612", type: "Post" },
+  { date: "Apr 21, 2025", url: "https://twitter.com/i/web/status/1914237655736287355", type: "Post" },
+  { date: "Apr 18, 2025", url: "https://twitter.com/i/web/status/1913130424135540816", type: "Post" },
+  { date: "Apr 17, 2025", url: "https://twitter.com/i/web/status/1912787303811924084", type: "Post" },
+  { date: "Apr 14, 2025", url: "https://twitter.com/i/web/status/1911767239839133998", type: "Post" },
+  { date: "Apr 12, 2025", url: "https://twitter.com/i/web/status/1911005976414535924", type: "Post" },
+  { date: "Apr 11, 2025", url: "https://twitter.com/i/web/status/1910708186220310850", type: "Post" },
+  { date: "Apr 2, 2025",  url: "https://twitter.com/i/web/status/1907517967086047602", type: "Post" },
+  { date: "Mar 28, 2025", url: "https://twitter.com/i/web/status/1905611005582807384", type: "Post" },
+  { date: "Mar 28, 2025", url: "https://twitter.com/i/web/status/1905527528346841194", type: "Post" },
+  { date: "Mar 27, 2025", url: "https://twitter.com/i/web/status/1905392191817593326", type: "Post" },
+  { date: "Mar 27, 2025", url: "https://twitter.com/i/web/status/1905303796747485427", type: "Post" },
+  { date: "Mar 26, 2025", url: "https://twitter.com/i/web/status/1904991349058732505", type: "Post" },
+  { date: "Mar 24, 2025", url: "https://twitter.com/i/web/status/1904200516495651085", type: "Post" },
+  { date: "Mar 22, 2025", url: "https://twitter.com/i/web/status/1903381776644379056", type: "Post" },
+  { date: "Mar 21, 2025", url: "https://twitter.com/i/web/status/1903076185036272121", type: "Post" },
+  { date: "Mar 19, 2025", url: "https://twitter.com/i/web/status/1902472903553065138", type: "Post" },
+  { date: "Mar 18, 2025", url: "https://twitter.com/i/web/status/1901960489183117391", type: "Post" },
+  { date: "Mar 18, 2025", url: "https://twitter.com/i/web/status/1901959448517628144", type: "Post" },
+  { date: "Mar 16, 2025", url: "https://twitter.com/i/web/status/1901387040262115762", type: "Post" },
+  { date: "Mar 15, 2025", url: "https://twitter.com/i/web/status/1900700398106611951", type: "Post" },
+  { date: "Mar 12, 2025", url: "https://twitter.com/i/web/status/1899670165203071477", type: "Post" },
+  { date: "Mar 10, 2025", url: "https://twitter.com/i/web/status/1899220506676527446", type: "Post" },
+  { date: "Mar 8, 2025",  url: "https://twitter.com/i/web/status/1898487654347419794", type: "Post" },
+  { date: "Mar 8, 2025",  url: "https://twitter.com/i/web/status/1898429181433680294", type: "Post" },
+  { date: "Mar 5, 2025",  url: "https://twitter.com/i/web/status/1897285590418382919", type: "Post" },
+  { date: "Mar 4, 2025",  url: "https://twitter.com/i/web/status/1896824986108850572", type: "Post" },
+  { date: "Mar 2, 2025",  url: "https://twitter.com/i/web/status/1896341702551695809", type: "Post" },
+  { date: "Mar 1, 2025",  url: "https://twitter.com/i/web/status/1895627743309807836", type: "Post" },
+  { date: "Feb 28, 2025", url: "https://twitter.com/i/web/status/1895618228455632899", type: "Post" },
+  { date: "Feb 28, 2025", url: "https://twitter.com/i/web/status/1895465977485369700", type: "Post" },
+  { date: "Feb 26, 2025", url: "https://twitter.com/i/web/status/1894883947357540374", type: "Post" },
+  { date: "Feb 23, 2025", url: "https://twitter.com/i/web/status/1893708882767143325", type: "Post" },
+  { date: "Feb 21, 2025", url: "https://twitter.com/i/web/status/1892928803183153195", type: "Post" },
+  { date: "Feb 14, 2025", url: "https://twitter.com/i/web/status/1890530338037706935", type: "Post" },
+  { date: "Feb 11, 2025", url: "https://twitter.com/i/web/status/1889445183181246490", type: "Post" },
+  { date: "Feb 11, 2025", url: "https://twitter.com/i/web/status/1889339651804053765", type: "Post" },
+  { date: "Feb 10, 2025", url: "https://twitter.com/i/web/status/1888840570329522579", type: "Post" },
+  { date: "Feb 9, 2025",  url: "https://twitter.com/i/web/status/1888584637712093670", type: "Post" },
+  { date: "Feb 8, 2025",  url: "https://twitter.com/i/web/status/1888376401549758970", type: "Post" },
+  { date: "Feb 8, 2025",  url: "https://twitter.com/i/web/status/1888278420364120543", type: "Post" },
+  { date: "Feb 6, 2025",  url: "https://twitter.com/i/web/status/1887611381081624982", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887186226748285030", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887135623632584788", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887135527796719849", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887124328518406285", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887108426515329333", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887094671819628976", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887088258527408188", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887088026821505311", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887087961830834628", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887087901889962378", type: "Post" },
+  { date: "Feb 5, 2025",  url: "https://twitter.com/i/web/status/1887038245101289589", type: "Post" },
+  { date: "Feb 4, 2025",  url: "https://twitter.com/i/web/status/1886900182551306641", type: "Post" },
+  { date: "Feb 4, 2025",  url: "https://twitter.com/i/web/status/1886887030329925689", type: "Post" },
+  { date: "Feb 4, 2025",  url: "https://twitter.com/i/web/status/1886659951453405611", type: "Post" },
+  { date: "Feb 2, 2025",  url: "https://twitter.com/i/web/status/1886080824665075770", type: "Post" },
+  { date: "Feb 2, 2025",  url: "https://twitter.com/i/web/status/1886046778522227155", type: "Post" },
+  { date: "Feb 2, 2025",  url: "https://twitter.com/i/web/status/1885961160186298584", type: "Post" },
+  { date: "Feb 1, 2025",  url: "https://twitter.com/i/web/status/1885615262767993009", type: "Post" },
+  { date: "Jan 27, 2025", url: "https://twitter.com/i/web/status/1883795460974108728", type: "Post" },
+  { date: "Jan 26, 2025", url: "https://twitter.com/i/web/status/1883588159243722835", type: "Post" },
+  { date: "Jan 22, 2025", url: "https://twitter.com/i/web/status/1882138520523088202", type: "Post" },
+  { date: "Jan 22, 2025", url: "https://twitter.com/i/web/status/1882138269917515897", type: "Post" },
+  { date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879093528619552938", type: "Post" },
+  { date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879093444955799943", type: "Post" },
+  { date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879090258383650906", type: "Post" },
+  { date: "Jan 14, 2025", url: "https://twitter.com/i/web/status/1879086646311993766", type: "Post" },
+  { date: "Jan 13, 2025", url: "https://twitter.com/i/web/status/1878722987094102142", type: "Post" },
+  { date: "Jan 12, 2025", url: "https://twitter.com/i/web/status/1878512720548352338", type: "Post" },
+  { date: "Dec 30, 2024", url: "https://twitter.com/i/web/status/1873686345539064311", type: "Post" },
+  { date: "Dec 27, 2024", url: "https://twitter.com/i/web/status/1872584176379351494", type: "Post" },
+  { date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834054386982481938",       type: "Post" },
+  { date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834054034770329777",       type: "Post" },
+  { date: "Sep 12, 2024", url: "https://x.com/i/web/status/1834053815164960832",       type: "Post" },
+  { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833803359729455414",       type: "Post" },
+  { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833797136959390168",       type: "Post" },
+  { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833772981601837084",       type: "Post" },
+  { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833772596967383052",       type: "Post" },
+  { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833729365504348189",       type: "Post" },
+  { date: "Sep 11, 2024", url: "https://x.com/i/web/status/1833729277755322477",       type: "Post" },
+  { date: "Sep 10, 2024", url: "https://x.com/i/web/status/1833282512769937622",       type: "Post" },
+  { date: "Sep 9, 2024",  url: "https://x.com/i/web/status/1833262420388634650",       type: "Post" },
+  { date: "Sep 9, 2024",  url: "https://x.com/i/web/status/1833164318940053828",       type: "Post" },
+  { date: "Sep 8, 2024",  url: "https://x.com/i/web/status/1832656565125488785",       type: "Post" },
+  { date: "Sep 7, 2024",  url: "https://x.com/i/web/status/1832301887107768476",       type: "Post" },
+  { date: "Sep 6, 2024",  url: "https://x.com/i/web/status/1832092683873255856",       type: "Post" },
+  { date: "Sep 6, 2024",  url: "https://x.com/i/web/status/1831947752928137293",       type: "Post" },
+  { date: "Sep 5, 2024",  url: "https://x.com/i/web/status/1831681929969619103",       type: "Post" },
+  { date: "Sep 5, 2024",  url: "https://x.com/i/web/status/1831681657545322543",       type: "Post" },
+  { date: "Sep 5, 2024",  url: "https://x.com/i/web/status/1831660387298615688",       type: "Post" },
+  { date: "Sep 4, 2024",  url: "https://x.com/i/web/status/1831233989627019321",       type: "Post" },
+  { date: "Sep 4, 2024",  url: "https://x.com/i/web/status/1831233815236194355",       type: "Post" },
+  { date: "Sep 4, 2024",  url: "https://x.com/i/web/status/1831224639139287302",       type: "Post" },
+  { date: "Sep 3, 2024",  url: "https://x.com/i/web/status/1830857239671796110",       type: "Post" },
+  { date: "Sep 2, 2024",  url: "https://x.com/i/web/status/1830673919667511380",       type: "Post" },
+  { date: "Sep 2, 2024",  url: "https://x.com/i/web/status/1830573875626729666",       type: "Post" },
+  { date: "Sep 2, 2024",  url: "https://x.com/i/web/status/1830571890471026741",       type: "Post" },
+  { date: "Sep 2, 2024",  url: "https://x.com/i/web/status/1830568268156801243",       type: "Post" },
+  { date: "Sep 2, 2024",  url: "https://x.com/i/web/status/1830559238654988406",       type: "Post" },
+  { date: "Sep 2, 2024",  url: "https://x.com/i/web/status/1830543806678053232",       type: "Post" },
+  { date: "Sep 2, 2024",  url: "https://x.com/i/web/status/1830543038470336963",       type: "Post" },
+  { date: "Aug 31, 2024", url: "https://x.com/i/web/status/1829972228428984485",       type: "Post" },
+  { date: "Aug 29, 2024", url: "https://x.com/i/web/status/1829254072702251447",       type: "Post" },
+  { date: "Aug 27, 2024", url: "https://x.com/i/web/status/1828523594982322481",       type: "Post" },
+  { date: "Aug 27, 2024", url: "https://x.com/i/web/status/1828522847507271760",       type: "Post" },
+  { date: "Aug 21, 2024", url: "https://x.com/i/web/status/1826265144810479837",       type: "Post" },
+  { date: "Aug 21, 2024", url: "https://x.com/i/web/status/1826221496617886124",       type: "Post" },
+  { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825940175094165810",       type: "Post" },
+  { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825938770115572132",       type: "Post" },
+  { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936958692143289",       type: "Post" },
+  { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936881793773619",       type: "Post" },
+  { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825936544844362202",       type: "Post" },
+  { date: "Aug 20, 2024", url: "https://x.com/i/web/status/1825924436198879492",       type: "Post" },
+  { date: "Aug 19, 2024", url: "https://x.com/i/web/status/1825624796089946418",       type: "Post" },
+  { date: "Aug 19, 2024", url: "https://x.com/i/web/status/1825568442100945074",       type: "Post" },
+  { date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824503875891761339",       type: "Post" },
+  { date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824495451829309911",       type: "Post" },
+  { date: "Aug 16, 2024", url: "https://x.com/i/web/status/1824489516477870432",       type: "Post" },
+  { date: "Aug 15, 2024", url: "https://x.com/i/web/status/1824074684016599421",       type: "Post" },
+  { date: "Aug 15, 2024", url: "https://x.com/i/web/status/1824050325000429799",       type: "Post" },
+  { date: "Aug 15, 2024", url: "https://x.com/i/web/status/1823967556903882975",       type: "Post" },
+  { date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823746346584625311",       type: "Post" },
+  { date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823746239545921631",       type: "Post" },
+  { date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823736305186169326",       type: "Post" },
+  { date: "Aug 14, 2024", url: "https://x.com/i/web/status/1823657147743207804",       type: "Post" },
+  { date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823426144055779533",       type: "Post" },
+  { date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823420076017475599",       type: "Post" },
+  { date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823411073481163049",       type: "Post" },
+  { date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823284541550678396",       type: "Post" },
+  { date: "Aug 13, 2024", url: "https://x.com/i/web/status/1823279911945064750",       type: "Post" },
+  { date: "Aug 10, 2024", url: "https://x.com/i/web/status/1823279911945064750",       type: "Post" },
+  { date: "Aug 10, 2024", url: "https://x.com/i/web/status/1822378512805707951",       type: "Post" },
+  { date: "Aug 10, 2024", url: "https://x.com/i/web/status/1822209915496071333",       type: "Post" },
+  { date: "Aug 9, 2024",  url: "https://x.com/i/web/status/1822209915496071333",       type: "Post" },
+  { date: "Aug 9, 2024",  url: "https://x.com/i/web/status/1821813226276823293",       type: "Post" },
+  { date: "Aug 8, 2024",  url: "https://x.com/i/web/status/1821473938985062860",       type: "Post" },
+  { date: "Aug 7, 2024",  url: "https://x.com/i/web/status/1821235560976945515",       type: "Post" },
+  { date: "Aug 7, 2024",  url: "https://x.com/i/web/status/1821172698401161377",       type: "Post" },
+  { date: "Aug 7, 2024",  url: "https://x.com/i/web/status/1821113978556186796",       type: "Post" },
+  { date: "Aug 6, 2024",  url: "https://x.com/i/web/status/1820913253775802869",       type: "Post" },
+  { date: "Aug 6, 2024",  url: "https://x.com/i/web/status/1820760011439825348",       type: "Post" },
+  { date: "Aug 6, 2024",  url: "https://x.com/i/web/status/1820727440127267227",       type: "Post" },
+  { date: "Aug 6, 2024",  url: "https://x.com/i/web/status/1820727019463692691",       type: "Post" },
+  { date: "Aug 6, 2024",  url: "https://x.com/i/web/status/1820725589751251176",       type: "Post" },
+  { date: "Aug 6, 2024",  url: "https://x.com/i/web/status/1820724748281684302",       type: "Post" },
+  { date: "Aug 5, 2024",  url: "https://x.com/i/web/status/1820443781289628069",       type: "Post" },
+  { date: "Aug 4, 2024",  url: "https://x.com/i/web/status/1820219365893054467",       type: "Post" },
+  { date: "Aug 4, 2024",  url: "https://x.com/i/web/status/1819979801639137652",       type: "Post" },
+  { date: "Aug 3, 2024",  url: "https://x.com/i/web/status/1819701924788101403",       type: "Post" },
+  { date: "Aug 3, 2024",  url: "https://x.com/i/web/status/1819701765366800483",       type: "Post" },
+  { date: "Aug 2, 2024",  url: "https://x.com/i/web/status/1819462541338378243",       type: "Post" },
+  { date: "Aug 1, 2024",  url: "https://x.com/i/web/status/1819043721628856654",       type: "Post" },
+  { date: "Aug 1, 2024",  url: "https://x.com/i/web/status/1819041500031836565",       type: "Post" },
+  { date: "Aug 1, 2024",  url: "https://x.com/i/web/status/1819041157042876622",       type: "Post" },
+  { date: "Aug 1, 2024",  url: "https://x.com/i/web/status/1818970981488095367",       type: "Post" },
+  { date: "Aug 1, 2024",  url: "https://x.com/i/web/status/1818921780297245149",       type: "Post" },
+  { date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818733775565599028",       type: "Post" },
+  { date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818588650214494657",       type: "Post" },
+  { date: "Jul 31, 2024", url: "https://x.com/i/web/status/1818586394459078799",       type: "Post" },
+  { date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818391628303728827",       type: "Post" },
+  { date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818390832761979135",       type: "Post" },
+  { date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818349879384850871",       type: "Post" },
+  { date: "Jul 30, 2024", url: "https://x.com/i/web/status/1818310768133046306",       type: "Post" },
+  { date: "Jul 29, 2024", url: "https://x.com/i/web/status/1817933933155143721",       type: "Post" },
+  { date: "Jul 29, 2024", url: "https://x.com/i/web/status/1818028758319906932",       type: "Post" },
+  { date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816877458664075596",       type: "Post" },
+  { date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816805110816612368",       type: "Post" },
+  { date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816798215968014412",       type: "Post" },
+  { date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816741721599844391",       type: "Post" },
+  { date: "Jul 26, 2024", url: "https://x.com/i/web/status/1816698141833322538",       type: "Post" },
+  { date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816216107771887882",       type: "Post" },
+  { date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816147238088810936",       type: "Post" },
+  { date: "Jul 24, 2024", url: "https://x.com/i/web/status/1816024007549870472",       type: "Post" },
+  { date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815781147906843023",       type: "Post" },
+  { date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815662255704330673",       type: "Post" },
+  { date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815617292686041406",       type: "Post" },
+  { date: "Jul 23, 2024", url: "https://x.com/i/web/status/1815617186163052725",       type: "Post" },
+  { date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815464709531070898",       type: "Post" },
+  { date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437598833193069",       type: "Post" },
+  { date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437582064353335",       type: "Post" },
+  { date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815437554901983646",       type: "Post" },
+  { date: "Jul 22, 2024", url: "https://x.com/i/web/status/1815399590759129224",       type: "Post" },
+  { date: "Jul 21, 2024", url: "https://x.com/i/web/status/1815086382026780709",       type: "Post" },
+  { date: "Jul 21, 2024", url: "https://x.com/i/web/status/1815000783924154847",       type: "Post" },
+  { date: "Jul 21, 2024", url: "https://x.com/i/web/status/1814950885702709282",       type: "Post" },
+  { date: "Jul 20, 2024", url: "https://x.com/i/web/status/1814696384559272257",       type: "Post" },
+  { date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814351862071468361",       type: "Post" },
+  { date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814224967883493433",       type: "Post" },
+  { date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814204375369175171",       type: "Post" },
+  { date: "Jul 19, 2024", url: "https://x.com/i/web/status/1814177810241531994",       type: "Post" },
+  { date: "Jul 18, 2024", url: "https://x.com/i/web/status/1813935093289021492",       type: "Post" },
+  { date: "Jul 18, 2024", url: "https://x.com/i/web/status/1813896052397019351",       type: "Post" },
+  { date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813574619472822725",       type: "Post" },
+  { date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813476282685858066",       type: "Post" },
+  { date: "Jul 17, 2024", url: "https://x.com/i/web/status/1813448170568909114",       type: "Post" },
+  { date: "Jul 16, 2024", url: "https://x.com/i/web/status/1813192457636458569",       type: "Post" },
+  { date: "Jul 16, 2024", url: "https://x.com/i/web/status/1813151780160618892",       type: "Post" },
+  { date: "Jul 15, 2024", url: "https://x.com/i/web/status/1812733919369805922",       type: "Post" },
+  { date: "Jul 14, 2024", url: "https://x.com/i/web/status/1812531549507584302",       type: "Post" },
+  { date: "Jul 13, 2024", url: "https://x.com/i/web/status/1812101444029325362",       type: "Post" },
+  { date: "Jul 13, 2024", url: "https://x.com/i/web/status/1812026261503369511",       type: "Post" },
+  { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811808621086281969",       type: "Post" },
+  { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788561269530842",       type: "Post" },
+  { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788474803962012",       type: "Post" },
+  { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811788329572008294",       type: "Post" },
+  { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811629885846065615",       type: "Post" },
+  { date: "Jul 12, 2024", url: "https://x.com/i/web/status/1811629829000774023",       type: "Post" },
+  { date: "Jul 11, 2024", url: "https://x.com/i/web/status/1811480185255895077",       type: "Post" },
+  { date: "Jul 11, 2024", url: "https://x.com/i/web/status/1811289918901018985",       type: "Post" },
+  { date: "Jul 10, 2024", url: "https://x.com/i/web/status/1811088931259031992",       type: "Post" },
+  { date: "Jul 9, 2024",  url: "https://x.com/i/web/status/1810636866582126753",       type: "Post" },
+  { date: "Jul 8, 2024",  url: "https://x.com/i/web/status/1810208870599365022",       type: "Post" },
+  { date: "Jul 7, 2024",  url: "https://x.com/i/web/status/1809942669080113427",       type: "Post" },
+  { date: "Jul 7, 2024",  url: "https://x.com/i/web/status/1809942287847428379",       type: "Post" },
+  { date: "Jul 6, 2024",  url: "https://x.com/i/web/status/1809456717853319197",       type: "Post" },
+  { date: "Jul 5, 2024",  url: "https://x.com/i/web/status/1809244046205780190",       type: "Post" },
+  { date: "Jul 5, 2024",  url: "https://x.com/i/web/status/1809243796716101692",       type: "Post" },
+  { date: "Jul 5, 2024",  url: "https://x.com/i/web/status/1809081821352603750",       type: "Post" },
+  { date: "Jul 5, 2024",  url: "https://x.com/i/web/status/1809080732138017084",       type: "Post" },
+  { date: "Jul 4, 2024",  url: "https://x.com/i/web/status/1808760695770485138",       type: "Post" },
+  { date: "Jul 3, 2024",  url: "https://x.com/i/web/status/1808527263920439469",       type: "Post" },
+  { date: "Jul 2, 2024",  url: "https://x.com/i/web/status/1808113094998065411",       type: "Post" },
+  { date: "Jul 1, 2024",  url: "https://x.com/i/web/status/1807665095167578145",       type: "Post" },
+  { date: "Jul 1, 2024",  url: "https://x.com/i/web/status/1807664630296097255",       type: "Post" },
+];
+
+let activeYear = 'all';
+let searchQuery = '';
+let filtered = [];
+
+function getYear(d) { const m = d.match(/\d{4}/); return m ? m[0] : ''; }
+
+function applyFilters() {
+  filtered = DATA.filter(item => {
+    const yr = getYear(item.date);
+    const matchY = activeYear === 'all' || yr === activeYear;
+    const q = searchQuery.toLowerCase();
+    const matchQ = !q || item.date.toLowerCase().includes(q) || item.url.toLowerCase().includes(q) || item.type.toLowerCase().includes(q);
+    return matchY && matchQ;
+  });
+  render();
+}
+
+function render() {
+  const tbody = document.getElementById('tableBody');
+  const noResults = document.getElementById('noResults');
+  tbody.innerHTML = '';
+
+  document.getElementById('totalCount').textContent = DATA.length;
+  document.getElementById('visibleCount').textContent = filtered.length;
+  document.getElementById('postCount').textContent = filtered.filter(i => i.type === 'Post').length;
+  document.getElementById('rtCount').textContent = filtered.filter(i => i.type === 'RT').length;
+  document.getElementById('resultsInfo').textContent = `Showing ${filtered.length} of ${DATA.length} records`;
+  document.getElementById('footerCount').textContent = `${filtered.length} records shown`;
+
+  if (filtered.length === 0) {
+    noResults.style.display = 'block';
+    return;
+  }
+  noResults.style.display = 'none';
+
+  filtered.forEach(item => {
+    const statusId = item.url.split('/').pop();
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="date-cell">${item.date}</td>
+      <td class="id-cell">
+        <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.url}</a>
+      </td>
+      <td>
+        <span class="type-badge ${item.type === 'RT' ? 'rt' : ''}">${item.type === 'RT' ? '/RT/' : 'Post'}</span>
+      </td>
+      <td class="action-cell">
+        <button class="copy-btn" onclick="copyLink('${item.url}')">Copy</button>
+        <a class="open-btn" href="${item.url}" target="_blank" rel="noopener noreferrer">Open</a>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterYear(year, btn) {
+  activeYear = year;
+  document.querySelectorAll('.yr-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function copyLink(url) {
+  navigator.clipboard.writeText(url).then(() => showToast('Link copied'));
+}
+
+function copyFiltered() {
+  const text = filtered.map(i => `${i.date} [${i.type}]: ${i.url}`).join('\n');
+  navigator.clipboard.writeText(text).then(() => showToast(`${filtered.length} links copied`));
+}
+
+function resetAll() {
+  activeYear = 'all';
+  searchQuery = '';
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.yr-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[onclick*="all"]').classList.add('active');
+  applyFilters();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQuery = e.target.value;
+  applyFilters();
+});
+
+applyFilters();
+</script>
+</body>
+</html>
